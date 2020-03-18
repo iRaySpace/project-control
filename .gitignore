@@ -4,3 +4,4 @@
 *.swp
 tags
 project_control/docs/current
+.idea

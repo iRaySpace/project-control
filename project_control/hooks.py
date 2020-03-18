@@ -22,7 +22,11 @@ fixtures = [
                     "Project-naming_series",
                     "Project-pc_budget_sb",
                     "Project-pc_budgets",
-                    "Project-pc_budget_total"
+                    "Project-pc_budget_total",
+                    "Project-pc_budget_cb",
+                    "Project-pc_variations",
+                    "Project-pc_variation_total",
+                    "Project-pc_estimated_total"
                 ]
             ]
         ]

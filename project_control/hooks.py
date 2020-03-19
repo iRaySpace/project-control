@@ -50,6 +50,9 @@ doc_events = {
     },
     "Purchase Order": {
         "validate": "project_control.doc_events.purchase_order.validate"
+    },
+    "Stock Entry": {
+        "validate": "project_control.doc_events.stock_entry.validate"
     }
 }
 

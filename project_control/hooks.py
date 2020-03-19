@@ -44,6 +44,9 @@ doctype_js = {
 doc_events = {
     "Project": {
         "validate": "project_control.doc_events.project.validate"
+    },
+    "Purchase Invoice": {
+        "validate": "project_control.doc_events.purchase_invoice.validate"
     }
 }
 

@@ -53,6 +53,9 @@ doc_events = {
     },
     "Stock Entry": {
         "validate": "project_control.doc_events.stock_entry.validate"
+    },
+    "Expense Claim": {
+        "validate": "project_control.doc_events.expense_claim.validate"
     }
 }
 

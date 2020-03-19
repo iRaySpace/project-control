@@ -47,6 +47,9 @@ doc_events = {
     },
     "Purchase Invoice": {
         "validate": "project_control.doc_events.purchase_invoice.validate"
+    },
+    "Purchase Order": {
+        "validate": "project_control.doc_events.purchase_order.validate"
     }
 }
 

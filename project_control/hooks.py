@@ -44,6 +44,18 @@ doctype_js = {
 doc_events = {
     "Project": {
         "validate": "project_control.doc_events.project.validate"
+    },
+    "Purchase Invoice": {
+        "validate": "project_control.doc_events.purchase_invoice.validate"
+    },
+    "Purchase Order": {
+        "validate": "project_control.doc_events.purchase_order.validate"
+    },
+    "Stock Entry": {
+        "validate": "project_control.doc_events.stock_entry.validate"
+    },
+    "Expense Claim": {
+        "validate": "project_control.doc_events.expense_claim.validate"
     }
 }
 

@@ -27,6 +27,7 @@ fixtures = [
                     "Project-pc_variations",
                     "Project-pc_variation_total",
                     "Project-pc_estimated_total"
+                    "Purchase Order-project"
                 ]
             ]
         ]
@@ -34,7 +35,8 @@ fixtures = [
 ]
 
 doctype_js = {
-    "Project": "public/js/project.js"
+    "Project": "public/js/project.js",
+    "Purchase Order": "public/js/purchase_order.js"
 }
 
 # Document Events

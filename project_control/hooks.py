@@ -91,4 +91,3 @@ doc_events = {
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "project_control.event.get_events"
 # }
-

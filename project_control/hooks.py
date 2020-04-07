@@ -65,6 +65,9 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
+scheduler_events = {
+    "hourly": ["project_control.scheduler_events.hourly.set_estimated_gross_margin"]
+}
 # scheduler_events = {
 # 	"all": [
 # 		"project_control.tasks.all"

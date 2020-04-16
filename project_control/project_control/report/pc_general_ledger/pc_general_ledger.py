@@ -13,7 +13,7 @@ def execute(filters=None):
 	distinct_documents = _filter_rows_of_similar_documents(empty_project_rows)
 	vouchers_with_project = _get_vouchers_with_project(distinct_documents)
 
-	return col, res
+	return col, _set_res_with_projects(res, vouchers_with_project)
 
 
 def _filter_rows_of_empty_project(rows):
@@ -47,4 +47,16 @@ def _get_vouchers_with_project(distinct_documents):
 		voucher_type = document.get('voucher_type')
 		if voucher_type == 'Sales Invoice':
 			vouchers_with_project[voucher_no] = frappe.db.get_value('Sales Invoice', voucher_no, 'Project')
+		elif voucher_type == 'Purchase Invoice':
+			vouchers_with_project[voucher_no] = frappe.db.get_value('Purchase Invoice', voucher_no, 'Project')
+		elif voucher_type == 'Stock Entry':
+			vouchers_with_project[voucher_no] = frappe.db.get_value('Stock Entry', voucher_no, 'Project')
 	return vouchers_with_project
+
+
+def _set_res_with_projects(res, vouchers_with_project):
+	for data in res:
+		voucher_no = data.get('voucher_no')
+		if voucher_no in vouchers_with_project:
+			data['project'] = vouchers_with_project[voucher_no]
+	return res

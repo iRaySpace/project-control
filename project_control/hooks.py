@@ -59,6 +59,9 @@ doc_events = {
     },
     "Expense Claim": {
         "validate": "project_control.doc_events.expense_claim.validate"
+    },
+    "Delivery Note": {
+        "validate": "project_control.doc_events.delivery_note.validate"
     }
 }
 

@@ -1,0 +1,30 @@
+{
+ "add_total_row": 0,
+ "creation": "2020-04-16 16:28:14.851570",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2020-04-16 16:28:14.851570",
+ "modified_by": "Administrator",
+ "module": "Project Control",
+ "name": "PC General Ledger",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "GL Entry",
+ "report_name": "PC General Ledger",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Auditor"
+  }
+ ]
+}

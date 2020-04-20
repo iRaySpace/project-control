@@ -46,11 +46,11 @@ def _get_vouchers_with_project(distinct_documents):
 		voucher_no = document.get('voucher_no')
 		voucher_type = document.get('voucher_type')
 		if voucher_type == 'Sales Invoice':
-			vouchers_with_project[voucher_no] = frappe.db.get_value('Sales Invoice', voucher_no, 'Project')
+			vouchers_with_project[voucher_no] = frappe.db.get_value('Sales Invoice', voucher_no, 'project')
 		elif voucher_type == 'Purchase Invoice':
-			vouchers_with_project[voucher_no] = frappe.db.get_value('Purchase Invoice', voucher_no, 'Project')
+			vouchers_with_project[voucher_no] = frappe.db.get_value('Purchase Invoice', voucher_no, 'project')
 		elif voucher_type == 'Stock Entry':
-			vouchers_with_project[voucher_no] = frappe.db.get_value('Stock Entry', voucher_no, 'Project')
+			vouchers_with_project[voucher_no] = frappe.db.get_value('Stock Entry', voucher_no, 'project')
 	return vouchers_with_project
 
 

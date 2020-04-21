@@ -51,6 +51,20 @@ def _get_vouchers_with_project(distinct_documents):
 			vouchers_with_project[voucher_no] = frappe.db.get_value('Purchase Invoice', voucher_no, 'project')
 		elif voucher_type == 'Stock Entry':
 			vouchers_with_project[voucher_no] = frappe.db.get_value('Stock Entry', voucher_no, 'project')
+		elif voucher_type == 'Journal Entry':
+			voucher = frappe.db.sql("""
+				SELECT 
+					jea.project 
+				FROM `tabJournal Entry` je
+				INNER JOIN `tabJournal Entry Account` jea
+				ON je.name = jea.parent
+				WHERE je.name = %s
+				AND jea.project != '' 
+			""", voucher_no, as_dict=1)
+			if voucher:
+				voucher_project = voucher[0].get('project')
+				vouchers_with_project[voucher_no] = voucher_project
+
 	return vouchers_with_project
 
 

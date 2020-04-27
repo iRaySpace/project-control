@@ -29,7 +29,9 @@ fixtures = [
                     "Project-pc_estimated_total",
                     "Project-pc_estimated_gross_margin",
                     "Purchase Order-project",
-                    "Purchase Invoice-project"
+                    "Purchase Invoice-project",
+                    "Project-pc_total_journal_entry",
+                    "Project-pc_total_delivery_note"
                 ]
             ]
         ]

@@ -1,0 +1,20 @@
+{
+ "add_total_row": 0,
+ "creation": "2020-04-27 19:59:17.854513",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2020-04-27 19:59:17.854513",
+ "modified_by": "Administrator",
+ "module": "Project Control",
+ "name": "PC Project Status",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Project",
+ "report_name": "PC Project Status",
+ "report_type": "Script Report",
+ "roles": []
+}

@@ -31,7 +31,8 @@ fixtures = [
                     "Purchase Order-project",
                     "Purchase Invoice-project",
                     "Project-pc_total_journal_entry",
-                    "Project-pc_total_delivery_note"
+                    "Project-pc_total_delivery_note",
+                    "Project-pc_per_unbilled"
                 ]
             ]
         ]

@@ -1,6 +1,8 @@
 import frappe
 
 
+# TODO: move to commons
+
 @frappe.whitelist()
 def get_journal_costs(project):
     journal_costs = 0.0

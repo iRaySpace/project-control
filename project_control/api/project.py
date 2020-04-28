@@ -15,7 +15,7 @@ def get_journal_costs(project):
     if journal_entry:
         total_debit = journal_entry[0].get('total_debit') or 0.0
         total_credit = journal_entry[0].get('total_credit') or 0.0
-        journal_costs = total_debit - total_credit
+        journal_costs = total_debit + total_credit
     return journal_costs
 
 

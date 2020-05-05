@@ -32,7 +32,10 @@ fixtures = [
                     "Purchase Invoice-project",
                     "Project-pc_total_journal_entry",
                     "Project-pc_total_delivery_note",
-                    "Project-pc_per_unbilled"
+                    "Project-pc_per_unbilled",
+                    "Employee-pc_gratuity_paid_till_date",
+                    "Employee-pc_gratuity_till_date",
+                    "Project-pc_order_value"
                 ]
             ]
         ]
@@ -74,7 +77,10 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
-    "hourly": ["project_control.scheduler_events.hourly.set_estimated_gross_margin"]
+    "hourly": [
+        "project_control.scheduler_events.hourly.set_estimated_gross_margin",
+        "project_control.scheduler_events.hourly.set_gross_gratuity"
+    ]
 }
 # scheduler_events = {
 # 	"all": [

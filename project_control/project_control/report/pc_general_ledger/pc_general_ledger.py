@@ -25,7 +25,7 @@ def _get_gl_entries(filters):
 	select_fields = """, debit, credit, debit_in_account_currency,
 			credit_in_account_currency """
 
-	order_by_statement = "order by je.posting_date, jea.account, jea.creation"
+	order_by_statement = "order by posting_date, account, creation"
 
 	if filters.get("group_by") == _("Group by Voucher"):
 		order_by_statement = "order by posting_date, voucher_type, voucher_no"
@@ -35,10 +35,31 @@ def _get_gl_entries(filters):
 
 	gl_entries = frappe.db.sql(
 		"""
+		SELECT
+			posting_date, account, party_type, party,
+			voucher_type, voucher_no, cost_center, project,
+			against_voucher_type, against_voucher, account_currency,
+			remarks, against, is_opening {select_fields}
+		FROM `tabGL Entry`
+		WHERE company=%(company)s
+		AND voucher_type != 'Journal Entry' {conditions}
+		{order_by_statement}
+		""".format(
+			select_fields=select_fields,
+			conditions=general_ledger.get_conditions(filters),
+			order_by_statement=order_by_statement
+		), filters, as_dict=1)
+
+	je_order_by_statement = "order by je.posting_date, jea.account, jea.creation"
+
+	journal_entries = frappe.db.sql(
+		"""
         SELECT
             jea.name as gl_entry,
             je.posting_date,
             jea.account,
+            'Journal Entry' as voucher_type,
+            je.name as voucher_no,
             jea.party_type,
             jea.party,
             jea.reference_type as against_voucher_type,
@@ -55,13 +76,15 @@ def _get_gl_entries(filters):
         """.format(
 			select_fields=select_fields,
 			conditions=general_ledger.get_conditions(filters),
-			order_by_statement=order_by_statement
+			order_by_statement=je_order_by_statement
 		), filters, as_dict=1)
 
+	entries = [*gl_entries, *journal_entries]
+
 	if filters.get('presentation_currency'):
-		return convert_to_presentation_currency(gl_entries, currency_map)
+		return convert_to_presentation_currency(entries, currency_map)
 	else:
-		return gl_entries
+		return entries
 
 
 def _filter_rows_of_empty_project(rows):

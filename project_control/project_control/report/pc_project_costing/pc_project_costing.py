@@ -34,6 +34,7 @@ def _get_columns(filters):
 def _get_data(filters):
 	projects = frappe.db.sql("""
 		SELECT
+			name as project_code,
 			project_name,
 			total_sales_amount as sales_invoice,
 			total_purchase_cost as purchase_invoice,

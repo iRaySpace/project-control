@@ -22,16 +22,12 @@ def _get_columns(filters):
 			'options': options
 		}
 	return [
-		make_column('Project Code', 'project_code', 110, 'Data'),
+		make_column('Old Serial No', 'old_serial_no', 130, 'Data'),
 		make_column('Project Name', 'project_name', 180, 'Data'),
-		make_column('Sales Invoice', 'sales_invoice', 130),
-		make_column('Purchase Invoice', 'purchase_invoice', 130),
-		make_column('Delivery Note', 'delivery_note', 130),
-		make_column('Stock Issued', 'stock_issued', 130),
-		make_column('JV', 'journal_voucher', 130),
+		make_column('Order Value', 'order_value', 130),
 		make_column('WIP Billing', 'wip_billing', 130),
-		make_column('WIP Job Cost', 'wip_job_cost', 130),
-		make_column('Total', 'total', 130)
+		make_column('Estimated Cost', 'estimated_cost', 130),
+		make_column('WIP Job Cost', 'wip_job_cost', 130)
 	]
 
 
@@ -42,7 +38,10 @@ def _get_data(filters):
 			project_name,
 			total_sales_amount as sales_invoice,
 			total_purchase_cost as purchase_invoice,
-			total_consumed_material_cost as stock_issued
+			total_consumed_material_cost as stock_issued,
+			pc_order_value as order_value,
+			old_serial_no,
+			pc_estimated_total as estimated_cost
 		FROM `tabProject`
 	""", as_dict=1)
 
@@ -54,7 +53,6 @@ def _get_data(filters):
 		stock_issued = project.get('stock_issued')
 
 		delivery_note = get_delivery_note_costs(project_code)
-		journal_voucher = get_journal_costs(project_code)
 
 		wip_billing = sum([
 			project.get('sales_invoice'),
@@ -68,11 +66,8 @@ def _get_data(filters):
 			_get_purchase_invoice_costs(project_code, wip_job_cost_account)
 		])
 
-		project['delivery_note'] = delivery_note
-		project['journal_voucher'] = journal_voucher
 		project['wip_billing'] = wip_billing
 		project['wip_job_cost'] = wip_job_cost
-		project['total'] = wip_billing + wip_job_cost
 
 	return projects
 

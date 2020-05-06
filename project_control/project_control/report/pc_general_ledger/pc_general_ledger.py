@@ -52,6 +52,11 @@ def _get_gl_entries(filters):
 
 	je_order_by_statement = "order by je.posting_date, jea.account, jea.creation"
 
+	if filters.get("group_by") == _("Group by Voucher"):
+		je_order_by_statement = "order by je.posting_date, je.name"
+
+	je_conditions = _get_conditions(filters, True)
+
 	journal_entries = frappe.db.sql(
 		"""
         SELECT
@@ -75,9 +80,11 @@ def _get_gl_entries(filters):
         {order_by_statement}
         """.format(
 			select_fields=select_fields,
-			conditions=general_ledger.get_conditions(filters),
+			conditions=je_conditions,
 			order_by_statement=je_order_by_statement
 		), filters, as_dict=1)
+
+	print('hala')
 
 	entries = [*gl_entries, *journal_entries]
 
@@ -87,84 +94,8 @@ def _get_gl_entries(filters):
 		return entries
 
 
-def _filter_rows_of_empty_project(rows):
-	def make_data(row):
-		return row.get('voucher_type') and row.get('voucher_no') and not row.get('project')
-
-	return list(filter(make_data, rows))
-
-
-def _filter_rows_of_similar_documents(empty_project_rows):
-	data = []
-
-	def filter_from_data(row):
-		return list(filter(
-			lambda x:
-			x['voucher_type'] == row['voucher_type']
-			and x['voucher_no'] == row['voucher_no'], data))
-
-	for empty_project_row in empty_project_rows:
-		existing = filter_from_data(empty_project_row)
-		if not existing:
-			data.append(empty_project_row)
-
-	return data
-
-
-def _get_vouchers_with_project(distinct_documents):
-	vouchers_with_project = {}
-	for document in distinct_documents:
-		voucher_no = document.get('voucher_no')
-		voucher_type = document.get('voucher_type')
-		if voucher_type == 'Sales Invoice':
-			vouchers_with_project[voucher_no] = frappe.db.get_value('Sales Invoice', voucher_no, 'project')
-		elif voucher_type == 'Purchase Invoice':
-			vouchers_with_project[voucher_no] = frappe.db.get_value('Purchase Invoice', voucher_no, 'project')
-		elif voucher_type == 'Stock Entry':
-			vouchers_with_project[voucher_no] = frappe.db.get_value('Stock Entry', voucher_no, 'project')
-		elif voucher_type == 'Journal Entry':
-			voucher = frappe.db.sql("""
-				SELECT 
-					jea.project 
-				FROM `tabJournal Entry` je
-				INNER JOIN `tabJournal Entry Account` jea
-				ON je.name = jea.parent
-				WHERE je.name = %s
-				AND jea.project != '' 
-			""", voucher_no, as_dict=1)
-			if voucher:
-				voucher_project = voucher[0].get('project')
-				vouchers_with_project[voucher_no] = voucher_project
-
-	return vouchers_with_project
-
-
-def _set_res_with_projects(res, vouchers_with_project):
-	for data in res:
-		voucher_no = data.get('voucher_no')
-		if voucher_no in vouchers_with_project:
-			data['project'] = vouchers_with_project[voucher_no]
-	return res
-
-
-# def _get_journal_entries():
-# 	journal_entries = frappe.db.sql("""
-# 		SELECT
-# 			account,
-# 			party_type,
-# 			party,
-# 			against_account,
-# 			debit,
-# 			credit,
-# 			account_currency,
-# 			debit_in_account_currency,
-# 			credit_in_account_currency,
-# 			reference_type,
-# 			reference_name,
-# 			user_remark,
-# 			cost_center,
-# 			project
-# 		FROM `tabJournal Entry Account`
-# 		WHERE docstatus=1
-# 	""", as_dict=1)
-# 	print(journal_entries)
+def _get_conditions(filters, je=False):
+	conditions = general_ledger.get_conditions(filters)
+	if je:
+		conditions = conditions.replace('voucher_no', 'je.name', 1)
+	return conditions

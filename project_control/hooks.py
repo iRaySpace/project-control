@@ -70,6 +70,9 @@ doc_events = {
     },
     "Delivery Note": {
         "validate": "project_control.doc_events.delivery_note.validate"
+    },
+    "GL Entry": {
+        "validate": "project_control.doc_events.gl_entry.validate"
     }
 }
 

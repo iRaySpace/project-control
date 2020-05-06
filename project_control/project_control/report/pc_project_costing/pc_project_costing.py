@@ -22,12 +22,11 @@ def _get_columns(filters):
 			'options': options
 		}
 	return [
-		make_column('Project Code', 'project_code', 110, 'Data'),
-		make_column('Project Name', 'project_name', 180, 'Data'),
 		make_column('Old Serial No', 'old_serial_no', 130, 'Data'),
+		make_column('Project Name', 'project_name', 180, 'Data'),
 		make_column('Order Value', 'order_value', 130),
-		make_column('Estimated Cost', 'estimated_cost', 130),
 		make_column('WIP Billing', 'wip_billing', 130),
+		make_column('Estimated Cost', 'estimated_cost', 130),
 		make_column('WIP Job Cost', 'wip_job_cost', 130)
 	]
 
@@ -35,7 +34,6 @@ def _get_columns(filters):
 def _get_data(filters):
 	projects = frappe.db.sql("""
 		SELECT
-			name as project_code,
 			project_name,
 			total_sales_amount as sales_invoice,
 			total_purchase_cost as purchase_invoice,

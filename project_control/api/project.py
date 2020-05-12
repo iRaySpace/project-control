@@ -22,14 +22,20 @@ def get_journal_costs(project):
 
 
 @frappe.whitelist()
-def get_delivery_note_costs(project):
+def get_delivery_note_costs(project, conditions='', filters={}):
+    filters['project'] = project
+
+    if conditions:
+        conditions = 'AND {}'.format(conditions)
+
     delivery_note_costs = 0.0
     delivery_note = frappe.db.sql("""
         SELECT SUM(grand_total) as costs
         FROM `tabDelivery Note`
         WHERE docstatus=1
-        AND project=%s 
-    """, project, as_dict=1)
+        AND project=%(project)s
+        {conditions}
+    """.format(conditions=conditions), filters, as_dict=1)
     if delivery_note:
         delivery_note_costs = delivery_note[0].get('costs') or 0
     return delivery_note_costs

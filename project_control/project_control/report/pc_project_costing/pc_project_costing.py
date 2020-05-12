@@ -57,7 +57,11 @@ def _get_data(filters):
 		project_code = project.get('project_code')
 		stock_issued = project.get('stock_issued')
 
-		delivery_note = get_delivery_note_costs(project_code)
+		delivery_note = get_delivery_note_costs(
+			project_code,
+			_get_posting_date_conditions(filters),
+			filters
+		)
 
 		wip_billing = sum([
 			project.get('sales_invoice'),
@@ -78,6 +82,9 @@ def _get_data(filters):
 
 
 def _validate_filters(filters):
+	if filters.from_date > filters.to_date:
+		frappe.throw(_("From Date must be before To Date"))
+
 	# would not work on v12 (probably)
 	if filters.get('project'):
 		projects = cstr(filters.get("project")).strip()
@@ -89,6 +96,10 @@ def _get_conditions(filters):
 	if filters.get('project'):
 		conditions.append('name IN %(project)s')
 	return 'WHERE {}'.format(' AND '.join(conditions)) if conditions else ''
+
+
+def _get_posting_date_conditions(filters):
+	return 'posting_date >= %(from_date)s AND posting_date <= %(to_date)s'
 
 
 def _get_net_journal(project, account):

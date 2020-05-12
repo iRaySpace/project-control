@@ -31,7 +31,8 @@ def _set_project_field(invoice):
                 map(lambda x: x.project, invoice.items)
             )
         )
-        invoice.project = projects[0]
+        if projects:
+            invoice.project = projects[0]
 
 
 def _set_items_project_field(invoice):

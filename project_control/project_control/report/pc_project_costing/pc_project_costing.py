@@ -4,10 +4,12 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
+from frappe.utils import cstr
 from project_control.api.project import get_delivery_note_costs
 
 
 def execute(filters=None):
+	_validate_filters(filters)
 	columns, data = _get_columns(filters), _get_data(filters)
 	return columns, data
 
@@ -43,7 +45,10 @@ def _get_data(filters):
 			old_serial_no,
 			pc_estimated_total as estimated_cost
 		FROM `tabProject`
-	""", as_dict=1)
+		{conditions}
+	""".format(
+		conditions=_get_conditions(filters)
+	), filters, as_dict=1)
 
 	wip_billing_account = _get_wip_billing_account()
 	wip_job_cost_account = _get_wip_job_cost_account()
@@ -70,6 +75,20 @@ def _get_data(filters):
 		project['wip_job_cost'] = wip_job_cost
 
 	return projects
+
+
+def _validate_filters(filters):
+	# would not work on v12 (probably)
+	if filters.get('project'):
+		projects = cstr(filters.get("project")).strip()
+		filters.project = [d.strip() for d in projects.split(',') if d]
+
+
+def _get_conditions(filters):
+	conditions = []
+	if filters.get('project'):
+		conditions.append('name IN %(project)s')
+	return 'WHERE {}'.format(' AND '.join(conditions)) if conditions else ''
 
 
 def _get_net_journal(project, account):

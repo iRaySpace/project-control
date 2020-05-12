@@ -102,7 +102,13 @@ def _get_posting_date_conditions(filters):
 	return 'posting_date >= %(from_date)s AND posting_date <= %(to_date)s'
 
 
-def _get_net_journal(project, account):
+def _get_net_journal(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
 	net_journal = 0.0
 	data = frappe.db.sql("""
 		SELECT 
@@ -110,13 +116,15 @@ def _get_net_journal(project, account):
 			SUM(credit_in_account_currency) as total_credit
 		FROM `tabJournal Entry Account`
 		WHERE docstatus=1
-		AND project=%s
-		AND account=%s
-	""", (project, account), as_dict=1)
+		AND project=%(project)s
+		AND account=%(account)s
+	""".format(conditions=conditions), filters, as_dict=1)
+
 	if data:
 		total_debit = data[0].get('total_debit') or 0.0
 		total_credit = data[0].get('total_credit') or 0.0
 		net_journal = total_debit - total_credit
+
 	return net_journal
 
 

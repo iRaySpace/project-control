@@ -59,20 +59,35 @@ def _get_data(filters):
 
 		delivery_note = get_delivery_note_costs(
 			project_code,
-			_get_posting_date_conditions(filters),
+			_get_posting_date_conditions(),
 			filters
 		)
 
 		wip_billing = sum([
 			project.get('sales_invoice'),
-			_get_net_journal(project_code, wip_billing_account)
+			_get_net_journal(
+				project_code,
+				wip_billing_account,
+				_get_posting_date_conditions(),
+				filters
+			)
 		])
 
 		wip_job_cost = sum([
 			delivery_note,
 			stock_issued,
-			_get_net_journal(project_code, wip_job_cost_account),
-			_get_purchase_invoice_costs(project_code, wip_job_cost_account)
+			_get_net_journal(
+				project_code,
+				wip_job_cost_account,
+				_get_posting_date_conditions(),
+				filters
+			),
+			_get_purchase_invoice_costs(
+				project_code,
+				wip_job_cost_account,
+				_get_posting_date_conditions(),
+				filters
+			)
 		])
 
 		project['wip_billing'] = wip_billing
@@ -98,7 +113,7 @@ def _get_conditions(filters):
 	return 'WHERE {}'.format(' AND '.join(conditions)) if conditions else ''
 
 
-def _get_posting_date_conditions(filters):
+def _get_posting_date_conditions():
 	return 'posting_date >= %(from_date)s AND posting_date <= %(to_date)s'
 
 
@@ -112,12 +127,15 @@ def _get_net_journal(project, account, conditions='', filters={}):
 	net_journal = 0.0
 	data = frappe.db.sql("""
 		SELECT 
-			SUM(debit_in_account_currency) as total_debit,
-			SUM(credit_in_account_currency) as total_credit
-		FROM `tabJournal Entry Account`
-		WHERE docstatus=1
-		AND project=%(project)s
-		AND account=%(account)s
+			SUM(jea.debit_in_account_currency) as total_debit,
+			SUM(jea.credit_in_account_currency) as total_credit
+		FROM `tabJournal Entry Account` jea
+		INNER JOIN `tabJournal Entry` je
+		ON jea.parent = je.name
+		WHERE je.docstatus=1
+		AND jea.project=%(project)s
+		AND jea.account=%(account)s
+		{conditions}
 	""".format(conditions=conditions), filters, as_dict=1)
 
 	if data:
@@ -142,15 +160,26 @@ def _get_wip_job_cost_account():
 	return wip_job_cost
 
 
-def _get_purchase_invoice_costs(project, account):
+def _get_purchase_invoice_costs(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
 	purchase_invoice_costs = 0.0
 	data = frappe.db.sql("""
-			SELECT SUM(amount) as total_costs
-			FROM `tabPurchase Invoice Item`
-			WHERE docstatus=1
-			AND project=%s
-			AND expense_account=%s
-		""", (project, account), as_dict=1)
+			SELECT SUM(pii.amount) as total_costs
+			FROM `tabPurchase Invoice Item` pii
+			INNER JOIN `tabPurchase Invoice` pi
+			ON pii.parent = pi.name
+			WHERE pii.docstatus=1
+			AND pii.project=%(project)s
+			AND pii.expense_account=%(account)s
+			{conditions}
+		""".format(conditions=conditions), filters, as_dict=1)
+
 	if data:
 		purchase_invoice_costs = data[0].get('total_costs') or 0.0
+
 	return purchase_invoice_costs

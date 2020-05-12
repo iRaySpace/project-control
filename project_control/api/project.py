@@ -36,6 +36,8 @@ def get_delivery_note_costs(project, conditions='', filters={}):
         AND project=%(project)s
         {conditions}
     """.format(conditions=conditions), filters, as_dict=1)
+
     if delivery_note:
         delivery_note_costs = delivery_note[0].get('costs') or 0
+
     return delivery_note_costs

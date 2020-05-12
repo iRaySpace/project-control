@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
-from project_control.api.project import get_journal_costs, get_delivery_note_costs
+from project_control.api.project import get_delivery_note_costs
 
 
 def execute(filters=None):

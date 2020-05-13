@@ -69,7 +69,7 @@ def _get_data(filters):
 		)
 
 		wip_billing = sum([
-			_sum_amount_with_taxes(sales_invoices),
+			_sum_amount_with_taxes(sales_invoices, True),
 			_get_net_journal(
 				project_code,
 				wip_billing_account,
@@ -77,6 +77,13 @@ def _get_data(filters):
 				filters
 			)
 		])
+
+		purchase_invoices = _get_purchase_invoices(
+			project_code,
+			wip_job_cost_account,
+			_get_posting_date_conditions(),
+			filters
+		)
 
 		wip_job_cost = sum([
 			delivery_note,
@@ -87,12 +94,7 @@ def _get_data(filters):
 				_get_posting_date_conditions(),
 				filters
 			),
-			_get_purchase_invoice_costs(
-				project_code,
-				wip_job_cost_account,
-				_get_posting_date_conditions(),
-				filters
-			)
+			_sum_amount_with_taxes(purchase_invoices, False)
 		])
 
 		project['wip_billing'] = wip_billing
@@ -211,7 +213,28 @@ def _get_sales_invoices(project, account, conditions='', filters={}):
 	return data
 
 
-def _sum_amount_with_taxes(data):
+def _get_purchase_invoices(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
+	data = frappe.db.sql("""
+			SELECT pii.amount, pi.taxes_and_charges
+			FROM `tabPurchase Invoice Item` pii
+			INNER JOIN `tabPurchase Invoice` pi
+			ON pii.parent = pi.name
+			WHERE pii.docstatus=1
+			AND pi.project=%(project)s
+			AND pii.expense_account=%(account)s
+			{conditions}
+		""".format(conditions=conditions), filters, as_dict=1)
+
+	return data
+
+
+def _sum_amount_with_taxes(data, is_selling):
 	"""
 	Data must have [amount], [taxes_and_charges]
 	:param data:
@@ -223,16 +246,16 @@ def _sum_amount_with_taxes(data):
 	for row in data:
 		taxes_and_charges = row.get('taxes_and_charges')
 		if taxes_and_charges not in cached_rate:
-			cached_rate[taxes_and_charges] = _get_taxes_rate(taxes_and_charges)
+			cached_rate[taxes_and_charges] = _get_taxes_rate(taxes_and_charges, is_selling)
 		tax_amount = row.get('amount') * (cached_rate[taxes_and_charges] / 100.00)
 		total_amount = total_amount + (row.get('amount') + tax_amount)
 
 	return total_amount
 
 
-def _get_taxes_rate(parent):
+def _get_taxes_rate(parent, is_selling):
 	taxes_and_charges = frappe.get_all(
-		'Sales Taxes and Charges',
+		'Sales Taxes and Charges' if is_selling else 'Purchase Taxes and Charges',
 		filters={'parent': parent},
 		fields=['rate']
 	)

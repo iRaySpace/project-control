@@ -14,9 +14,11 @@ def validate(invoice, method):
 
 def _validate_multiple_projects(invoice):
     projects = list(
-        filter(
-            lambda x: x,
-            map(lambda x: x.project, invoice.items)
+        set(
+            filter(
+                lambda x: x,
+                map(lambda x: x.project, invoice.items)
+            )
         )
     )
     if len(projects) > 1:

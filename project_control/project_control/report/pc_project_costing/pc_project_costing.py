@@ -38,7 +38,6 @@ def _get_data(filters):
 		SELECT
 			name as project_code,
 			project_name,
-			total_purchase_cost as purchase_invoice,
 			total_consumed_material_cost as stock_issued,
 			pc_order_value as order_value,
 			old_serial_no,

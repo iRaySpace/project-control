@@ -38,7 +38,6 @@ def _get_data(filters):
 		SELECT
 			name as project_code,
 			project_name,
-			total_sales_amount as sales_invoice,
 			total_purchase_cost as purchase_invoice,
 			total_consumed_material_cost as stock_issued,
 			pc_order_value as order_value,
@@ -63,8 +62,15 @@ def _get_data(filters):
 			filters
 		)
 
+		sales_invoices = _get_sales_invoices(
+			project_code,
+			wip_billing_account,
+			_get_posting_date_conditions(),
+			filters
+		)
+
 		wip_billing = sum([
-			project.get('sales_invoice'),
+			_sum_amount_with_taxes(sales_invoices),
 			_get_net_journal(
 				project_code,
 				wip_billing_account,
@@ -183,3 +189,52 @@ def _get_purchase_invoice_costs(project, account, conditions='', filters={}):
 		purchase_invoice_costs = data[0].get('total_costs') or 0.0
 
 	return purchase_invoice_costs
+
+
+def _get_sales_invoices(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
+	data = frappe.db.sql("""
+			SELECT sii.amount, si.taxes_and_charges
+			FROM `tabSales Invoice Item` sii
+			INNER JOIN `tabSales Invoice` si
+			ON sii.parent = si.name
+			WHERE sii.docstatus=1
+			AND si.project=%(project)s
+			AND sii.income_account=%(account)s
+			{conditions}
+		""".format(conditions=conditions), filters, as_dict=1)
+
+	return data
+
+
+def _sum_amount_with_taxes(data):
+	"""
+	Data must have [amount], [taxes_and_charges]
+	:param data:
+	:return:
+	"""
+	total_amount = 0.0
+
+	cached_rate = {}
+	for row in data:
+		taxes_and_charges = row.get('taxes_and_charges')
+		if taxes_and_charges not in cached_rate:
+			cached_rate[taxes_and_charges] = _get_taxes_rate(taxes_and_charges)
+		tax_amount = row.get('amount') * (cached_rate[taxes_and_charges] / 100.00)
+		total_amount = total_amount + (row.get('amount') + tax_amount)
+
+	return total_amount
+
+
+def _get_taxes_rate(parent):
+	taxes_and_charges = frappe.get_all(
+		'Sales Taxes and Charges',
+		filters={'parent': parent},
+		fields=['rate']
+	)
+	return taxes_and_charges[0].get('rate') if taxes_and_charges else 0.00

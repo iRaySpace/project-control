@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from frappe.utils import cstr
+from functools import reduce
 from project_control.api.project import get_delivery_note_costs
 
 
@@ -55,11 +56,18 @@ def _get_data(filters):
 		project_code = project.get('project_code')
 		stock_issued = project.get('stock_issued')
 
-		delivery_note = get_delivery_note_costs(
+		delivery_note = _get_delivery_note_costs(
 			project_code,
+			wip_job_cost_account,
 			_get_posting_date_conditions(),
 			filters
 		)
+
+		# delivery_note = get_delivery_note_costs(
+		# 	project_code,
+		# 	_get_posting_date_conditions(),
+		# 	filters
+		# )
 
 		sales_invoices = _get_sales_invoices(
 			project_code,
@@ -213,6 +221,25 @@ def _get_sales_invoices(project, account, conditions='', filters={}):
 	return data
 
 
+def _get_delivery_note_costs(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
+	data = frappe.db.sql("""
+			SELECT ge.credit
+			FROM `tabGL Entry` ge
+			WHERE ge.voucher_type='Delivery Note' 
+			AND ge.project=%(project)s
+			AND ge.against=%(account)s
+			{conditions}
+		""".format(conditions=conditions), filters, as_dict=1)
+
+	return reduce(lambda total, row: total + row['credit'], data, 0.00)
+
+
 def _get_purchase_invoices(project, account, conditions='', filters={}):
 	filters['project'] = project
 	filters['account'] = account
@@ -243,12 +270,16 @@ def _sum_amount_with_taxes(data, is_selling):
 	total_amount = 0.0
 
 	cached_rate = {}
+
 	for row in data:
 		taxes_and_charges = row.get('taxes_and_charges')
-		if taxes_and_charges not in cached_rate:
-			cached_rate[taxes_and_charges] = _get_taxes_rate(taxes_and_charges, is_selling)
-		tax_amount = row.get('amount') * (cached_rate[taxes_and_charges] / 100.00)
-		total_amount = total_amount + (row.get('amount') + tax_amount)
+		if not taxes_and_charges:
+			total_amount = total_amount + row.get('amount')
+		else:
+			if taxes_and_charges not in cached_rate:
+				cached_rate[taxes_and_charges] = _get_taxes_rate(taxes_and_charges, is_selling)
+			tax_amount = row.get('amount') * (cached_rate[taxes_and_charges] / 100.00)
+			total_amount = total_amount + (row.get('amount') + tax_amount)
 
 	return total_amount
 

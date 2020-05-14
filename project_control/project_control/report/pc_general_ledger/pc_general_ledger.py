@@ -88,8 +88,6 @@ def _get_gl_entries(filters):
 			order_by_statement=je_order_by_statement
 		), filters, as_dict=1)
 
-	print('hala')
-
 	entries = [*gl_entries, *journal_entries]
 
 	if filters.get('presentation_currency'):

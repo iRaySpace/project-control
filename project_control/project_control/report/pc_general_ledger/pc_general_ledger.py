@@ -6,17 +6,27 @@ import frappe
 from frappe import _
 from erpnext.accounts.report.utils import get_currency, convert_to_presentation_currency
 from erpnext.accounts.report.general_ledger import general_ledger
+from functools import reduce
 
 
 def execute(filters=None):
 	general_ledger.get_gl_entries = _get_gl_entries
 	col, res = general_ledger.execute(filters)
 
-	# empty_project_rows = _filter_rows_of_empty_project(res)
-	# distinct_documents = _filter_rows_of_similar_documents(empty_project_rows)
-	# vouchers_with_project = _get_vouchers_with_project(distinct_documents)
+	# Add new column to the existing General Ledger
+	# insert after [index] + 1
+	party_index = [i for i, d in enumerate(col) if 'party' in d.values()][0]
+	col.insert(party_index + 1, {
+		'label': _('Party Name'),
+		'fieldname': 'party_name',
+		'width': 180
+	})
 
-	# return col, _set_res_with_projects(res, vouchers_with_project)
+	party_names = _get_party_names(res)
+	for row in res:
+		if row.get('party', None) in party_names:
+			row['party_name'] = party_names[row.get('party')]
+
 	return col, res
 
 
@@ -84,8 +94,6 @@ def _get_gl_entries(filters):
 			order_by_statement=je_order_by_statement
 		), filters, as_dict=1)
 
-	print('hala')
-
 	entries = [*gl_entries, *journal_entries]
 
 	if filters.get('presentation_currency'):
@@ -99,3 +107,64 @@ def _get_conditions(filters, je=False):
 	if je:
 		conditions = conditions.replace('voucher_no', 'je.name', 1)
 	return conditions
+
+
+def _get_party_names(data):
+	"""
+	Get [dict] of party names matched with name
+	:param data:
+	:return:
+	"""
+	def make_list(party_type):
+		return list(
+			set(
+				map(
+					lambda x: x['party'],
+					filter(
+						lambda y: y.get('party_type', None) == party_type,
+						data
+					)
+				)
+			)
+		)
+
+	party_names = {}
+
+	supplier_list = make_list('Supplier')
+	suppliers = _make_dict(
+		frappe.db.sql("""
+			SELECT name, supplier_name
+			FROM `tabSupplier`
+			WHERE name IN (%(suppliers)s)
+		""", {
+			'suppliers': ', '.join(supplier_list)
+		}, as_dict=1),
+		'name',
+		'supplier_name'
+	)
+
+	customer_list = make_list('Customer')
+	customers = _make_dict(
+		frappe.db.sql("""
+			SELECT name, customer_name
+			FROM `tabCustomer`
+			WHERE name in (%(customers)s)
+		""", {
+			'customers': ', '.join(customer_list)
+		}, as_dict=1),
+		'name',
+		'customer_name'
+	)
+
+	return {
+		**suppliers,
+		**customers
+	}
+
+
+def _make_dict(data, key, value):
+	def make_data(x, row):
+		if row.get(key) not in x:
+			x[row.get(key)] = row.get(value)
+		return x
+	return reduce(make_data, data, {})

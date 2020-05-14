@@ -12,11 +12,15 @@ def execute(filters=None):
 	general_ledger.get_gl_entries = _get_gl_entries
 	col, res = general_ledger.execute(filters)
 
-	# empty_project_rows = _filter_rows_of_empty_project(res)
-	# distinct_documents = _filter_rows_of_similar_documents(empty_project_rows)
-	# vouchers_with_project = _get_vouchers_with_project(distinct_documents)
+	# Add new column to the existing General Ledger
+	# insert after [index] + 1
+	party_index = [i for i, d in enumerate(col) if 'party' in d.values()][0]
+	col.insert(party_index + 1, {
+		'label': _('Party Name'),
+		'fieldname': 'party_name',
+		'width': 180
+	})
 
-	# return col, _set_res_with_projects(res, vouchers_with_project)
 	return col, res
 
 

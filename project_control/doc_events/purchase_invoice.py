@@ -7,9 +7,8 @@ def validate(invoice, method):
     _validate_multiple_projects(invoice)
     _set_project_field(invoice)
     _set_items_project_field(invoice)
-    for item in invoice.items:
-        if item.project:
-            validate_project_costing(item.project, item.amount)
+    if invoice.project:
+        validate_project_costing(invoice.project, invoice.base_grand_total)
 
 
 def _validate_multiple_projects(invoice):

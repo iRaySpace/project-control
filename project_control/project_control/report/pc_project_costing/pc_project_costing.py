@@ -77,7 +77,7 @@ def _get_data(filters):
 		)
 
 		wip_billing = sum([
-			reduce(lambda total, x: total + x['amount'], sales_invoices, 0.00),
+			reduce(lambda total, x: total - x['amount'], sales_invoices, 0.00),
 			_get_net_journal(
 				project_code,
 				wip_billing_account,

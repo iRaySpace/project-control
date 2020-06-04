@@ -77,7 +77,7 @@ def _get_data(filters):
 		)
 
 		wip_billing = sum([
-			_sum_amount_with_taxes(sales_invoices, True),
+			reduce(lambda total, x: total + x['amount'], sales_invoices, 0.00),
 			_get_net_journal(
 				project_code,
 				wip_billing_account,
@@ -208,7 +208,7 @@ def _get_sales_invoices(project, account, conditions='', filters={}):
 		conditions = 'AND {}'.format(conditions)
 
 	data = frappe.db.sql("""
-			SELECT sii.amount, si.taxes_and_charges
+			SELECT sii.amount
 			FROM `tabSales Invoice Item` sii
 			INNER JOIN `tabSales Invoice` si
 			ON sii.parent = si.name

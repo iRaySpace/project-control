@@ -208,7 +208,7 @@ def _get_sales_invoices(project, account, conditions='', filters={}):
 		conditions = 'AND {}'.format(conditions)
 
 	data = frappe.db.sql("""
-			SELECT sii.amount
+			SELECT sii.net_amount
 			FROM `tabSales Invoice Item` sii
 			INNER JOIN `tabSales Invoice` si
 			ON sii.parent = si.name

@@ -278,8 +278,8 @@ def _sum_amount_with_taxes(data, is_selling):
 		else:
 			if taxes_and_charges not in cached_rate:
 				cached_rate[taxes_and_charges] = _get_taxes_rate(taxes_and_charges, is_selling)
-			tax_amount = row.get('amount') * (cached_rate[taxes_and_charges] / 100.00)
-			total_amount = total_amount + (row.get('amount') + tax_amount)
+			tax_amount = row.get('net_amount') * (cached_rate[taxes_and_charges] / 100.00)
+			total_amount = total_amount + (row.get('net_amount') + tax_amount)
 
 	return total_amount
 

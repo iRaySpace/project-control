@@ -274,7 +274,7 @@ def _sum_amount_with_taxes(data, is_selling):
 	for row in data:
 		taxes_and_charges = row.get('taxes_and_charges')
 		if not taxes_and_charges:
-			total_amount = total_amount + row.get('amount')
+			total_amount = total_amount + row.get('net_amount')
 		else:
 			if taxes_and_charges not in cached_rate:
 				cached_rate[taxes_and_charges] = _get_taxes_rate(taxes_and_charges, is_selling)

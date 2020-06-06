@@ -248,7 +248,7 @@ def _get_purchase_invoices(project, account, conditions='', filters={}):
 		conditions = 'AND {}'.format(conditions)
 
 	data = frappe.db.sql("""
-			SELECT pii.amount, pi.taxes_and_charges
+			SELECT pii.net_amount, pi.taxes_and_charges
 			FROM `tabPurchase Invoice Item` pii
 			INNER JOIN `tabPurchase Invoice` pi
 			ON pii.parent = pi.name

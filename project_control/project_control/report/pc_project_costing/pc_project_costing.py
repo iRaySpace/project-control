@@ -102,10 +102,11 @@ def _get_data(filters):
 				_get_posting_date_conditions(),
 				filters
 			),
-			_sum_amount_with_taxes(purchase_invoices, False)
+			reduce(lambda total, x: total - x['net_amount'], purchase_invoices, 0.00),
+			# _sum_amount_with_taxes(purchase_invoices, False)
 		])
 
-		project['wip_billing'] = wip_billing
+		project['wip_billing'] = abs(wip_billing)
 		project['wip_job_cost'] = wip_job_cost
 
 	return projects

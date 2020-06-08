@@ -6,13 +6,41 @@ import frappe
 from frappe import _
 from frappe.utils import cstr
 from functools import reduce
-from project_control.api.project import get_delivery_note_costs
 
 
 def execute(filters=None):
 	_validate_filters(filters)
 	columns, data = _get_columns(filters), _get_data(filters)
+
+	if filters.get('include_totals'):
+		_append_total_column(columns, data)
+
 	return columns, data
+
+
+def _append_total_column(columns, data):
+	for row in data:
+		currency_columns = list(
+			map(
+				lambda y: y['fieldname'],
+				filter(
+					lambda x: x['fieldtype'] == 'Currency',
+					columns
+				)
+			)
+		)
+		row['total'] = sum([
+			row[column]
+			for column in currency_columns
+		])
+
+	columns.append({
+		'label': _('Total'),
+		'fieldname': 'total',
+		'width': 130,
+		'fieldtype': 'Currency',
+		'options': ''
+	})
 
 
 def _get_columns(filters):

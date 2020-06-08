@@ -2,3 +2,4 @@ project_control.patches.set_project_naming_series
 project_control.patches.set_project_gl_entry_sales_invoice
 project_control.patches.set_project_gl_entry_delivery_note
 project_control.patches.set_project_gl_entry_purchase_invoice
+project_control.patches.set_project_gl_entry_stock_entry

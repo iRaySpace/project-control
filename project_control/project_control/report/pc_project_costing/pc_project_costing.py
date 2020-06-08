@@ -77,7 +77,7 @@ def _get_data(filters):
 		)
 
 		wip_billing = sum([
-			reduce(lambda total, x: total - x['amount'], sales_invoices, 0.00),
+			reduce(lambda total, x: total - x['net_amount'], sales_invoices, 0.00),
 			_get_net_journal(
 				project_code,
 				wip_billing_account,
@@ -248,7 +248,7 @@ def _get_purchase_invoices(project, account, conditions='', filters={}):
 		conditions = 'AND {}'.format(conditions)
 
 	data = frappe.db.sql("""
-			SELECT pii.amount, pi.taxes_and_charges
+			SELECT pii.net_amount, pi.taxes_and_charges
 			FROM `tabPurchase Invoice Item` pii
 			INNER JOIN `tabPurchase Invoice` pi
 			ON pii.parent = pi.name
@@ -274,12 +274,12 @@ def _sum_amount_with_taxes(data, is_selling):
 	for row in data:
 		taxes_and_charges = row.get('taxes_and_charges')
 		if not taxes_and_charges:
-			total_amount = total_amount + row.get('amount')
+			total_amount = total_amount + row.get('net_amount')
 		else:
 			if taxes_and_charges not in cached_rate:
 				cached_rate[taxes_and_charges] = _get_taxes_rate(taxes_and_charges, is_selling)
-			tax_amount = row.get('amount') * (cached_rate[taxes_and_charges] / 100.00)
-			total_amount = total_amount + (row.get('amount') + tax_amount)
+			tax_amount = row.get('net_amount') * (cached_rate[taxes_and_charges] / 100.00)
+			total_amount = total_amount + (row.get('net_amount') + tax_amount)
 
 	return total_amount
 

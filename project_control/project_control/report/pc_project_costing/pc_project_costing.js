@@ -50,5 +50,10 @@ frappe.query_reports["PC Project Costing"] = {
 				return data;
 			}
 		},
+		{
+			"fieldname": "include_totals",
+			"label": __("Include Totals"),
+			"fieldtype": "Check",
+		},
 	]
-}
+};

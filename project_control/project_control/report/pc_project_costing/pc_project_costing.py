@@ -129,12 +129,12 @@ def _get_data(filters):
 		wip_job_cost = sum([
 			delivery_note,
 			reduce(
-				lambda total, x: total - x['net_amount'],
+				lambda total, x: total + x['net_amount'],
 				purchase_invoices,
 				0.00
 			),
 			reduce(
-				lambda total, x: total - x['amount'],
+				lambda total, x: total + x['amount'],
 				stock_issued,
 				0.00
 			),

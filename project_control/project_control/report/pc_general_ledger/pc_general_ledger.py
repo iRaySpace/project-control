@@ -143,7 +143,7 @@ def _get_party_names(data):
 		'supplier_name'
 	)
 
-	customer_list = make_list('Customer')
+	customer_list = list(filter(lambda x: x, make_list('Customer')))
 	customers = _make_dict(
 		frappe.db.sql("""
 			SELECT name, customer_name

@@ -149,6 +149,19 @@ def _get_data(filters):
 		project['wip_billing'] = abs(wip_billing)
 		project['wip_job_cost'] = wip_job_cost
 
+	# others
+	net_journal = _get_net_journal(
+		'',
+		wip_job_cost_account,
+		_get_posting_date_conditions(),
+		filters
+	)
+
+	projects.append({
+		'project_name': 'Others',
+		'wip_job_cost': net_journal
+	})
+
 	return projects
 
 
@@ -184,7 +197,8 @@ def _get_net_journal(project, account, conditions='', filters={}):
 	data = frappe.db.sql("""
 		SELECT 
 			SUM(jea.debit_in_account_currency) as total_debit,
-			SUM(jea.credit_in_account_currency) as total_credit
+			SUM(jea.credit_in_account_currency) as total_credit,
+			je.name
 		FROM `tabJournal Entry Account` jea
 		INNER JOIN `tabJournal Entry` je
 		ON jea.parent = je.name

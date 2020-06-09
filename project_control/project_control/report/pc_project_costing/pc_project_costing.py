@@ -132,7 +132,7 @@ def _get_data(filters):
 			filters
 		)
 	}
-	
+
 	if others.get('wip_job_cost') > 0:
 		projects.append(others)
 
@@ -171,8 +171,7 @@ def _get_net_journal(project, account, conditions='', filters={}):
 	data = frappe.db.sql("""
 		SELECT 
 			SUM(jea.debit_in_account_currency) as total_debit,
-			SUM(jea.credit_in_account_currency) as total_credit,
-			je.name
+			SUM(jea.credit_in_account_currency) as total_credit
 		FROM `tabJournal Entry Account` jea
 		INNER JOIN `tabJournal Entry` je
 		ON jea.parent = je.name

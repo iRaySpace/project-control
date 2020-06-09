@@ -54,7 +54,7 @@ def _get_columns(filters):
 		}
 	return [
 		make_column('Old Serial No', 'old_serial_no', 130, 'Data'),
-		make_column('Project Name', 'project_name', 180, 'Data'),
+		make_column('Project Name', 'project_name', 180, 'Link', 'Project'),
 		make_column('Order Value', 'order_value', 130),
 		make_column('WIP Billing', 'wip_billing', 130),
 		make_column('Estimated Cost', 'estimated_cost', 130),
@@ -67,7 +67,6 @@ def _get_data(filters):
 		SELECT
 			name as project_code,
 			project_name,
-			total_consumed_material_cost as stock_issued,
 			pc_order_value as order_value,
 			old_serial_no,
 			pc_estimated_total as estimated_cost
@@ -82,14 +81,6 @@ def _get_data(filters):
 
 	for project in projects:
 		project_code = project.get('project_code')
-		stock_issued = project.get('stock_issued')
-
-		delivery_note = _get_delivery_note_costs(
-			project_code,
-			wip_job_cost_account,
-			_get_posting_date_conditions(),
-			filters
-		)
 
 		# delivery_note = get_delivery_note_costs(
 		# 	project_code,
@@ -114,7 +105,21 @@ def _get_data(filters):
 			)
 		])
 
+		delivery_note = _get_delivery_note_costs(
+			project_code,
+			wip_job_cost_account,
+			_get_posting_date_conditions(),
+			filters
+		)
+
 		purchase_invoices = _get_purchase_invoices(
+			project_code,
+			wip_job_cost_account,
+			_get_posting_date_conditions(),
+			filters
+		)
+
+		stock_issued = _get_stock_issued(
 			project_code,
 			wip_job_cost_account,
 			_get_posting_date_conditions(),
@@ -123,15 +128,22 @@ def _get_data(filters):
 
 		wip_job_cost = sum([
 			delivery_note,
-			stock_issued,
+			reduce(
+				lambda total, x: total - x['net_amount'],
+				purchase_invoices,
+				0.00
+			),
+			reduce(
+				lambda total, x: total - x['amount'],
+				stock_issued,
+				0.00
+			),
 			_get_net_journal(
 				project_code,
 				wip_job_cost_account,
 				_get_posting_date_conditions(),
 				filters
 			),
-			reduce(lambda total, x: total - x['net_amount'], purchase_invoices, 0.00),
-			# _sum_amount_with_taxes(purchase_invoices, False)
 		])
 
 		project['wip_billing'] = abs(wip_billing)
@@ -284,6 +296,27 @@ def _get_purchase_invoices(project, account, conditions='', filters={}):
 			WHERE pii.docstatus=1
 			AND pi.project=%(project)s
 			AND pii.expense_account=%(account)s
+			{conditions}
+		""".format(conditions=conditions), filters, as_dict=1)
+
+	return data
+
+
+def _get_stock_issued(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
+	data = frappe.db.sql("""
+			SELECT sei.amount
+			FROM `tabStock Entry Detail` sei
+			INNER JOIN `tabStock Entry` se
+			ON sei.parent = se.name
+			WHERE sei.docstatus=1
+			AND se.project=%(project)s
+			AND sei.expense_account=%(account)s
 			{conditions}
 		""".format(conditions=conditions), filters, as_dict=1)
 

@@ -29,7 +29,9 @@ def _get_columns(filters):
 		make_column('Order Value', 'order_value', 130),
 		make_column('WIP Billing', 'wip_billing', 130),
 		make_column('Estimated Cost', 'estimated_cost', 130),
-		make_column('WIP Job Cost', 'wip_job_cost', 130)
+		make_column('WIP Job Cost', 'wip_job_cost', 130),
+		make_column('Gross Profit', 'gross_profit', 130),
+		make_column('Gross Profit %', 'gross_profit_per', 130, 'Percent')
 	]
 
 
@@ -93,6 +95,12 @@ def _get_data(filters):
 
 		project['wip_billing'] = abs(wip_billing)
 		project['wip_job_cost'] = wip_job_cost
+		project['gross_profit'] = project['wip_billing'] - project['wip_job_cost']
+
+		if project['wip_billing'] > 0:
+			project['gross_profit_per'] = project['gross_profit'] / project['wip_billing']
+		else:
+			project['gross_profit_per'] = 0.00
 
 	others = {
 		'project_name': 'Others',

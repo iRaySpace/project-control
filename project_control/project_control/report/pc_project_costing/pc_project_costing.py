@@ -28,10 +28,14 @@ def _get_columns(filters):
 		make_column('Project Name', 'project_name', 180, 'Link', 'Project'),
 		make_column('Order Value', 'order_value', 130),
 		make_column('WIP Billing', 'wip_billing', 130),
+		make_column('Billing Completion %', 'billing_completion_per', 130, 'Percent'),
 		make_column('Estimated Cost', 'estimated_cost', 130),
 		make_column('WIP Job Cost', 'wip_job_cost', 130),
-		make_column('Gross Profit', 'gross_profit', 130),
-		make_column('Gross Profit %', 'gross_profit_per', 130, 'Percent')
+		make_column('Cost Completion %', 'cost_completion_per', 130, 'Percent'),
+		make_column('Estimated GP', 'estimated_gp', 130),
+		make_column('Actual GP', 'actual_gp', 130),
+		make_column('Estimated GP %', 'estimated_gp_per', 130, 'Percent'),
+		make_column('Actual GP %', 'actual_gp_per', 130, 'Percent')
 	]
 
 
@@ -95,12 +99,14 @@ def _get_data(filters):
 
 		project['wip_billing'] = abs(wip_billing)
 		project['wip_job_cost'] = wip_job_cost
-		project['gross_profit'] = project['wip_billing'] - project['wip_job_cost']
 
-		if project['wip_billing'] > 0:
-			project['gross_profit_per'] = project['gross_profit'] / project['wip_billing']
-		else:
-			project['gross_profit_per'] = 0.00
+		project['billing_completion_per'] = _get_percent(project['wip_billing'], project['order_value'])
+		project['cost_completion_per'] = _get_percent(project['wip_job_cost'], project['estimated_cost'])
+
+		project['estimated_gp'] = project['order_value'] - project['estimated_cost']
+		project['actual_gp'] = project['wip_billing'] - project['wip_job_cost']
+		project['estimated_gp_per'] = _get_percent(project['estimated_gp'], project['order_value'])
+		project['actual_gp_per'] = _get_percent(project['actual_gp'], project['wip_billing'])
 
 	others = {
 		'project_name': 'Others',
@@ -338,3 +344,7 @@ def _get_gl_entries(project, account, conditions='', filters={}):
 	""".format(conditions=conditions), filters, as_dict=1)
 
 	return data
+
+
+def _get_percent(progress_value, base_value):
+	return (progress_value / base_value) * 100.00 if base_value > 0 else 0.00

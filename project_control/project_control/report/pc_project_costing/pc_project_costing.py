@@ -82,12 +82,6 @@ def _get_data(filters):
 	for project in projects:
 		project_code = project.get('project_code')
 
-		# delivery_note = get_delivery_note_costs(
-		# 	project_code,
-		# 	_get_posting_date_conditions(),
-		# 	filters
-		# )
-
 		sales_invoices = _get_sales_invoices(
 			project_code,
 			wip_billing_account,
@@ -105,21 +99,7 @@ def _get_data(filters):
 			)
 		])
 
-		delivery_note = _get_delivery_note_costs(
-			project_code,
-			wip_job_cost_account,
-			_get_posting_date_conditions(),
-			filters
-		)
-
-		purchase_invoices = _get_purchase_invoices(
-			project_code,
-			wip_job_cost_account,
-			_get_posting_date_conditions(),
-			filters
-		)
-
-		stock_issued = _get_stock_issued(
+		gl_entries = _get_gl_entries(
 			project_code,
 			wip_job_cost_account,
 			_get_posting_date_conditions(),
@@ -127,15 +107,9 @@ def _get_data(filters):
 		)
 
 		wip_job_cost = sum([
-			delivery_note,
 			reduce(
-				lambda total, x: total + x['net_amount'],
-				purchase_invoices,
-				0.00
-			),
-			reduce(
-				lambda total, x: total + x['amount'],
-				stock_issued,
+				lambda total, x: total + x['debit'] - x['credit'],
+				gl_entries,
 				0.00
 			),
 			_get_net_journal(
@@ -143,24 +117,24 @@ def _get_data(filters):
 				wip_job_cost_account,
 				_get_posting_date_conditions(),
 				filters
-			),
+			)
 		])
 
 		project['wip_billing'] = abs(wip_billing)
 		project['wip_job_cost'] = wip_job_cost
 
-	# others
-	net_journal = _get_net_journal(
-		'',
-		wip_job_cost_account,
-		_get_posting_date_conditions(),
-		filters
-	)
-
-	projects.append({
+	others = {
 		'project_name': 'Others',
-		'wip_job_cost': net_journal
-	})
+		'wip_job_cost': _get_net_journal(
+			'',
+			wip_job_cost_account,
+			_get_posting_date_conditions(),
+			filters
+		)
+	}
+	
+	if others.get('wip_job_cost') > 0:
+		projects.append(others)
 
 	return projects
 
@@ -367,3 +341,22 @@ def _get_taxes_rate(parent, is_selling):
 		fields=['rate']
 	)
 	return taxes_and_charges[0].get('rate') if taxes_and_charges else 0.00
+
+
+def _get_gl_entries(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
+	data = frappe.db.sql("""
+		SELECT ge.credit, ge.debit
+		FROM `tabGL Entry` ge
+		WHERE ge.voucher_type IN ('Delivery Note', 'Purchase Invoice', 'Stock Entry') 
+		AND ge.project=%(project)s
+		AND ge.account=%(account)s
+		{conditions}
+	""".format(conditions=conditions), filters, as_dict=1)
+
+	return data

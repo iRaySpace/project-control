@@ -2,6 +2,8 @@ import math
 import frappe
 from frappe.utils.data import getdate, nowdate
 
+DAYS_PER_YEAR = 365.0
+
 
 def set_estimated_gross_margin():
     projects = frappe.get_all('Project')

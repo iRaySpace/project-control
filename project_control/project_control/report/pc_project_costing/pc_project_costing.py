@@ -36,7 +36,7 @@ def _get_columns(filters):
 		make_column('Actual GP', 'actual_gp', 130),
 		make_column('Estimated GP %', 'estimated_gp_per', 130, 'Percent'),
 		make_column('Actual GP %', 'actual_gp_per', 130, 'Percent'),
-		make_column('Collection Amount', 'collection_amount', 130)
+		make_column('Collected Amount', 'collected_amount', 130)
 	]
 
 
@@ -98,8 +98,8 @@ def _get_data(filters):
 			)
 		])
 
-		collection_amounts = _get_collection_amounts(project_code, _get_posting_date_conditions(), filters)
-		project['collection_amount'] = reduce(lambda total, x: total + x['collection_amount'], collection_amounts, 0.00)
+		collected_amounts = _get_collected_amounts(project_code, _get_posting_date_conditions(), filters)
+		project['collected_amount'] = reduce(lambda total, x: total + x['collected_amount'], collected_amounts, 0.00)
 
 		project['wip_billing'] = abs(wip_billing)
 		project['wip_job_cost'] = wip_job_cost
@@ -238,14 +238,14 @@ def _get_sales_invoices(project, account, conditions='', filters={}):
 	return data
 
 
-def _get_collection_amounts(project, conditions='', filters={}):
+def _get_collected_amounts(project, conditions='', filters={}):
 	filters['project'] = project
 
 	if conditions:
 		conditions = 'AND {}'.format(conditions)
 
 	data = frappe.db.sql("""
-			SELECT (base_grand_total - outstanding_amount) as collection_amount
+			SELECT (base_grand_total - outstanding_amount) as collected_amount
 			FROM `tabSales Invoice`
 			WHERE docstatus=1 AND project=%(project)s
 			{conditions}

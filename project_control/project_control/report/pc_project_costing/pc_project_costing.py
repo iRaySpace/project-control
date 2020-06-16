@@ -36,8 +36,9 @@ def _get_columns(filters):
 		make_column('Actual GP', 'actual_gp', 130),
 		make_column('Estimated GP %', 'estimated_gp_per', 130, 'Percent'),
 		make_column('Actual GP %', 'actual_gp_per', 130, 'Percent'),
-		make_column('Collected Amount', 'collected_amount', 130),
-		make_column('Sales Person', 'sales_person', 130, 'Link', 'Employee')
+		make_column('Cost Variant Result', 'cost_variant_res', 130, 'Data'),
+		make_column('Sales Person', 'sales_person', 130, 'Link', 'Employee'),
+		make_column('Collected Amount', 'collected_amount', 130)
 	]
 
 
@@ -113,6 +114,9 @@ def _get_data(filters):
 		project['actual_gp'] = project['wip_billing'] - project['wip_job_cost']
 		project['estimated_gp_per'] = _get_percent(project['estimated_gp'], project['order_value'])
 		project['actual_gp_per'] = _get_percent(project['actual_gp'], project['wip_billing'])
+
+		# IF Estimated Cost > WIP Job Cost = Favourable else WIP Job Cost > Estimated Cost = Unfavourable
+		project['cost_variant_res'] = 'Favourable' if project['wip_job_cost'] > project['estimated_cost'] else 'Unfavourable'
 
 	others = {
 		'project_name': 'Others',

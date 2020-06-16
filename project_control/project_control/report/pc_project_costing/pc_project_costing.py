@@ -38,6 +38,7 @@ def _get_columns(filters):
 		make_column('Actual GP %', 'actual_gp_per', 130, 'Percent'),
 		make_column('Cost Variance', 'cost_variance', 130),
 		make_column('Cost Variant Result', 'cost_variant_res', 130, 'Data'),
+		make_column('Gross Profit Previously Recognized', 'gp_previous', 130),
 		make_column('Sales Person', 'sales_person', 130, 'Link', 'Employee'),
 		make_column('Collected Amount', 'collected_amount', 130)
 	]
@@ -58,8 +59,9 @@ def _get_data(filters):
 		conditions=_get_conditions(filters)
 	), filters, as_dict=1)
 
-	wip_billing_account = _get_wip_billing_account()
-	wip_job_cost_account = _get_wip_job_cost_account()
+	wip_billing_account = _get_wip_account('wip_billing_account')
+	wip_job_cost_account = _get_wip_account('wip_job_cost_account')
+	wip_gross_pl_account = _get_wip_account('wip_gross_pl_account')
 
 	for project in projects:
 		project_code = project.get('project_code')
@@ -118,6 +120,12 @@ def _get_data(filters):
 
 		project['cost_variance'] = project['estimated_cost'] - project['wip_job_cost']
 		project['cost_variant_res'] = 'Favourable' if project['wip_job_cost'] > project['estimated_cost'] else 'Unfavourable'
+		project['gp_previous'] = _get_net_journal(
+			project_code,
+			wip_gross_pl_account,
+			_get_posting_date_conditions(),
+			filters
+		)
 
 	others = {
 		'project_name': 'Others',
@@ -185,18 +193,11 @@ def _get_net_journal(project, account, conditions='', filters={}):
 	return net_journal
 
 
-def _get_wip_billing_account():
-	wip_billing = frappe.db.get_single_value('Project Control Settings', 'wip_billing_account')
-	if not wip_billing:
-		frappe.throw(_('WIP Billing Account is not set. Please set it under Project Control Settings.'))
-	return wip_billing
-
-
-def _get_wip_job_cost_account():
-	wip_job_cost = frappe.db.get_single_value('Project Control Settings', 'wip_job_cost_account')
-	if not wip_job_cost:
-		frappe.throw(_('WIP Job Cost Account is not set. Please set it under Project Control Settings.'))
-	return wip_job_cost
+def _get_wip_account(account):
+	wip_account = frappe.db.get_single_value('Project Control Settings', account)
+	if not wip_account:
+		frappe.throw(_('{} is not set. Please set it under Project Control Settings.'.format(account)))
+	return wip_account
 
 
 def _get_purchase_invoice_costs(project, account, conditions='', filters={}):

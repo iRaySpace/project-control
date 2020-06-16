@@ -36,7 +36,8 @@ def _get_columns(filters):
 		make_column('Actual GP', 'actual_gp', 130),
 		make_column('Estimated GP %', 'estimated_gp_per', 130, 'Percent'),
 		make_column('Actual GP %', 'actual_gp_per', 130, 'Percent'),
-		make_column('Collected Amount', 'collected_amount', 130)
+		make_column('Collected Amount', 'collected_amount', 130),
+		make_column('Sales Person', 'sales_person', 130, 'Link', 'Employee')
 	]
 
 
@@ -47,7 +48,8 @@ def _get_data(filters):
 			project_name,
 			pc_order_value as order_value,
 			old_serial_no,
-			pc_estimated_total as estimated_cost
+			pc_estimated_total as estimated_cost,
+			pc_sales_person as sales_person
 		FROM `tabProject`
 		{conditions}
 	""".format(

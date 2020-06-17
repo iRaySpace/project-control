@@ -39,7 +39,7 @@ def _get_columns(filters):
 		make_column('Cost Variance', 'cost_variance', 130),
 		make_column('Cost Variant Result', 'cost_variant_res', 130, 'Data'),
 		make_column('WIP Gross P&L', 'gp_previous', 130),
-		make_column('Sales Person', 'sales_person', 130, 'Link', 'Employee'),
+		make_column('Sales Person', 'sales_person', 130, 'Data'),
 		make_column('Collected Amount', 'collected_amount', 130)
 	]
 
@@ -62,6 +62,8 @@ def _get_data(filters):
 	wip_billing_account = _get_wip_account('wip_billing_account')
 	wip_job_cost_account = _get_wip_account('wip_job_cost_account')
 	wip_gross_pl_account = _get_wip_account('wip_gross_pl_account')
+
+	cached_sales_person = {}
 
 	for project in projects:
 		project_code = project.get('project_code')
@@ -109,6 +111,9 @@ def _get_data(filters):
 
 		project['wip_billing'] = abs(wip_billing)
 		project['wip_job_cost'] = wip_job_cost
+
+		sales_person_name = _get_sales_person_name(project.get('sales_person'), cached_sales_person)
+		project['sales_person'] = sales_person_name
 
 		project['billing_completion_per'] = _get_percent(project['wip_billing'], project['order_value'])
 		project['cost_completion_per'] = _get_percent(project['wip_job_cost'], project['estimated_cost'])
@@ -376,3 +381,13 @@ def _get_gl_entries(project, account, conditions='', filters={}):
 
 def _get_percent(progress_value, base_value):
 	return (progress_value / base_value) * 100.00 if base_value > 0 else 0.00
+
+
+def _get_sales_person_name(sales_person, cached={}):
+	if sales_person in cached:
+		return cached[sales_person]
+
+	sales_person_name = frappe.db.get_value('Employee', sales_person, 'employee_name')
+	cached[sales_person] = sales_person_name
+
+	return sales_person_name

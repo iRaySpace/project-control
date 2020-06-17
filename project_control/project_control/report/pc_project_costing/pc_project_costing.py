@@ -167,6 +167,21 @@ def _get_data(filters):
 			),
 		])
 
+	# TODO(refactor): moved others to other functions
+	others_cog_entries = _get_cogs_entries(
+		'',
+		cogs_account,
+		_get_posting_date_conditions(),
+		filters
+	)
+
+	others_sales_entries = _get_sales_entries(
+		'',
+		sales_account,
+		_get_posting_date_conditions(),
+		filters
+	)
+
 	others = {
 		'project_name': 'Others',
 		'wip_job_cost': _get_net_journal(
@@ -174,7 +189,17 @@ def _get_data(filters):
 			wip_job_cost_account,
 			_get_posting_date_conditions(),
 			filters
-		)
+		),
+		'cogs': reduce(
+			lambda total, x: total + x['debit'] - x['credit'],
+			others_cog_entries,
+			0.00
+		),
+		'sales': reduce(
+			lambda total, x: total + x['credit'] - x['debit'],
+			others_sales_entries,
+			0.00
+		),
 	}
 
 	if others.get('wip_job_cost') > 0:
@@ -426,11 +451,15 @@ def _get_cogs_entries(project, account, conditions='', filters={}):
 	if conditions:
 		conditions = 'AND {}'.format(conditions)
 
+	if project:
+		conditions = conditions + 'AND ge.project=%(project)s'
+	else:
+		conditions = conditions + 'AND ge.project IS NULL OR ge.project = ""'
+
 	data = frappe.db.sql("""
 		SELECT ge.credit, ge.debit
 		FROM `tabGL Entry` ge
 		WHERE ge.voucher_type IN ('Delivery Note', 'Purchase Invoice', 'Journal Entry') 
-		AND ge.project=%(project)s
 		AND ge.account=%(account)s
 		{conditions}
 	""".format(conditions=conditions), filters, as_dict=1)
@@ -445,11 +474,15 @@ def _get_sales_entries(project, account, conditions='', filters={}):
 	if conditions:
 		conditions = 'AND {}'.format(conditions)
 
+	if project:
+		conditions = conditions + 'AND ge.project=%(project)s'
+	else:
+		conditions = conditions + 'AND ge.project IS NULL OR ge.project = ""'
+
 	data = frappe.db.sql("""
 		SELECT ge.credit, ge.debit
 		FROM `tabGL Entry` ge
-		WHERE ge.voucher_type IN ('Sales Invoice', 'Journal Entry') 
-		AND ge.project=%(project)s
+		WHERE ge.voucher_type IN ('Sales Invoice', 'Journal Entry')
 		AND ge.account=%(account)s
 		{conditions}
 	""".format(conditions=conditions), filters, as_dict=1)

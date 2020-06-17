@@ -40,7 +40,9 @@ def _get_columns(filters):
 		make_column('Cost Variant Result', 'cost_variant_res', 130, 'Data'),
 		make_column('WIP Gross P&L', 'gp_previous', 130),
 		make_column('Sales Person', 'sales_person', 130, 'Data'),
-		make_column('Collected Amount', 'collected_amount', 130)
+		make_column('Collected Amount', 'collected_amount', 130),
+		make_column('Cost of Goods Sold', 'cogs', 130),
+		make_column('Sales', 'sales', 130)
 	]
 
 
@@ -62,6 +64,8 @@ def _get_data(filters):
 	wip_billing_account = _get_wip_account('wip_billing_account')
 	wip_job_cost_account = _get_wip_account('wip_job_cost_account')
 	wip_gross_pl_account = _get_wip_account('wip_gross_pl_account')
+	cogs_account = _get_wip_account('cogs_account')
+	sales_account = _get_wip_account('sales_account')
 
 	cached_sales_person = {}
 
@@ -106,6 +110,20 @@ def _get_data(filters):
 			)
 		])
 
+		cogs_entries = _get_cogs_entries(
+			project_code,
+			cogs_account,
+			_get_posting_date_conditions(),
+			filters
+		)
+
+		sales_entries = _get_sales_entries(
+			project_code,
+			sales_account,
+			_get_posting_date_conditions(),
+			filters
+		)
+
 		collected_amounts = _get_collected_amounts(project_code, _get_posting_date_conditions(), filters)
 		project['collected_amount'] = reduce(lambda total, x: total + x['collected_amount'], collected_amounts, 0.00)
 
@@ -132,6 +150,22 @@ def _get_data(filters):
 			filters,
 			True
 		)
+
+		project['cogs'] = sum([
+			reduce(
+				lambda total, x: total + x['debit'] - x['credit'],
+				cogs_entries,
+				0.00
+			),
+		])
+
+		project['sales'] = sum([
+			reduce(
+				lambda total, x: total + x['credit'] - x['debit'],
+				sales_entries,
+				0.00
+			),
+		])
 
 	others = {
 		'project_name': 'Others',
@@ -377,6 +411,44 @@ def _get_gl_entries(project, account, conditions='', filters={}):
 		SELECT ge.credit, ge.debit
 		FROM `tabGL Entry` ge
 		WHERE ge.voucher_type IN ('Delivery Note', 'Purchase Invoice', 'Stock Entry') 
+		AND ge.project=%(project)s
+		AND ge.account=%(account)s
+		{conditions}
+	""".format(conditions=conditions), filters, as_dict=1)
+
+	return data
+
+
+def _get_cogs_entries(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
+	data = frappe.db.sql("""
+		SELECT ge.credit, ge.debit
+		FROM `tabGL Entry` ge
+		WHERE ge.voucher_type IN ('Delivery Note', 'Purchase Invoice', 'Journal Entry') 
+		AND ge.project=%(project)s
+		AND ge.account=%(account)s
+		{conditions}
+	""".format(conditions=conditions), filters, as_dict=1)
+
+	return data
+
+
+def _get_sales_entries(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
+	data = frappe.db.sql("""
+		SELECT ge.credit, ge.debit
+		FROM `tabGL Entry` ge
+		WHERE ge.voucher_type IN ('Sales Invoice', 'Journal Entry') 
 		AND ge.project=%(project)s
 		AND ge.account=%(account)s
 		{conditions}

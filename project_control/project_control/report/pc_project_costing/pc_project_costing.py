@@ -38,9 +38,11 @@ def _get_columns(filters):
 		make_column('Actual GP %', 'actual_gp_per', 130, 'Percent'),
 		make_column('Cost Variance', 'cost_variance', 130),
 		make_column('Cost Variant Result', 'cost_variant_res', 130, 'Data'),
-		make_column('Gross Profit Previously Recognized', 'gp_previous', 130),
-		make_column('Sales Person', 'sales_person', 130, 'Link', 'Employee'),
-		make_column('Collected Amount', 'collected_amount', 130)
+		make_column('WIP Gross P&L', 'gp_previous', 130),
+		make_column('Sales Person', 'sales_person', 130, 'Data'),
+		make_column('Collected Amount', 'collected_amount', 130),
+		make_column('Cost of Goods Sold', 'cogs', 130),
+		make_column('Sales', 'sales', 130)
 	]
 
 
@@ -62,6 +64,10 @@ def _get_data(filters):
 	wip_billing_account = _get_wip_account('wip_billing_account')
 	wip_job_cost_account = _get_wip_account('wip_job_cost_account')
 	wip_gross_pl_account = _get_wip_account('wip_gross_pl_account')
+	cogs_account = _get_wip_account('cogs_account')
+	sales_account = _get_wip_account('sales_account')
+
+	cached_sales_person = {}
 
 	for project in projects:
 		project_code = project.get('project_code')
@@ -104,11 +110,28 @@ def _get_data(filters):
 			)
 		])
 
+		cogs_entries = _get_cogs_entries(
+			project_code,
+			cogs_account,
+			_get_posting_date_conditions(),
+			filters
+		)
+
+		sales_entries = _get_sales_entries(
+			project_code,
+			sales_account,
+			_get_posting_date_conditions(),
+			filters
+		)
+
 		collected_amounts = _get_collected_amounts(project_code, _get_posting_date_conditions(), filters)
 		project['collected_amount'] = reduce(lambda total, x: total + x['collected_amount'], collected_amounts, 0.00)
 
 		project['wip_billing'] = abs(wip_billing)
 		project['wip_job_cost'] = wip_job_cost
+
+		sales_person_name = _get_sales_person_name(project.get('sales_person'), cached_sales_person)
+		project['sales_person'] = sales_person_name
 
 		project['billing_completion_per'] = _get_percent(project['wip_billing'], project['order_value'])
 		project['cost_completion_per'] = _get_percent(project['wip_job_cost'], project['estimated_cost'])
@@ -119,13 +142,30 @@ def _get_data(filters):
 		project['actual_gp_per'] = _get_percent(project['actual_gp'], project['wip_billing'])
 
 		project['cost_variance'] = project['estimated_cost'] - project['wip_job_cost']
-		project['cost_variant_res'] = 'Favourable' if project['wip_job_cost'] > project['estimated_cost'] else 'Unfavourable'
+		project['cost_variant_res'] = 'Favourable' if project['wip_job_cost'] < project['estimated_cost'] else 'Unfavourable'
 		project['gp_previous'] = _get_net_journal(
 			project_code,
 			wip_gross_pl_account,
 			_get_posting_date_conditions(),
-			filters
+			filters,
+			True
 		)
+
+		project['cogs'] = sum([
+			reduce(
+				lambda total, x: total + x['debit'] - x['credit'],
+				cogs_entries,
+				0.00
+			),
+		])
+
+		project['sales'] = sum([
+			reduce(
+				lambda total, x: total + x['credit'] - x['debit'],
+				sales_entries,
+				0.00
+			),
+		])
 
 	others = {
 		'project_name': 'Others',
@@ -164,12 +204,18 @@ def _get_posting_date_conditions():
 	return 'posting_date >= %(from_date)s AND posting_date <= %(to_date)s'
 
 
-def _get_net_journal(project, account, conditions='', filters={}):
+def _get_net_journal(project, account, conditions='', filters={}, is_parent_account=False):
 	filters['project'] = project
 	filters['account'] = account
 
 	if conditions:
 		conditions = 'AND {}'.format(conditions)
+
+	if is_parent_account:
+		lft, rgt = frappe.db.get_value("Account", filters["account"], ["lft", "rgt"])
+		conditions += """ AND jea.account in (select name from tabAccount where lft>=%s and rgt<=%s and docstatus<2)""" % (lft, rgt)
+	else:
+		conditions += """ AND jea.account=%(account)s"""
 
 	net_journal = 0.0
 	data = frappe.db.sql("""
@@ -181,7 +227,6 @@ def _get_net_journal(project, account, conditions='', filters={}):
 		ON jea.parent = je.name
 		WHERE je.docstatus=1
 		AND jea.project=%(project)s
-		AND jea.account=%(account)s
 		{conditions}
 	""".format(conditions=conditions), filters, as_dict=1)
 
@@ -374,5 +419,53 @@ def _get_gl_entries(project, account, conditions='', filters={}):
 	return data
 
 
+def _get_cogs_entries(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
+	data = frappe.db.sql("""
+		SELECT ge.credit, ge.debit
+		FROM `tabGL Entry` ge
+		WHERE ge.voucher_type IN ('Delivery Note', 'Purchase Invoice', 'Journal Entry') 
+		AND ge.project=%(project)s
+		AND ge.account=%(account)s
+		{conditions}
+	""".format(conditions=conditions), filters, as_dict=1)
+
+	return data
+
+
+def _get_sales_entries(project, account, conditions='', filters={}):
+	filters['project'] = project
+	filters['account'] = account
+
+	if conditions:
+		conditions = 'AND {}'.format(conditions)
+
+	data = frappe.db.sql("""
+		SELECT ge.credit, ge.debit
+		FROM `tabGL Entry` ge
+		WHERE ge.voucher_type IN ('Sales Invoice', 'Journal Entry') 
+		AND ge.project=%(project)s
+		AND ge.account=%(account)s
+		{conditions}
+	""".format(conditions=conditions), filters, as_dict=1)
+
+	return data
+
+
 def _get_percent(progress_value, base_value):
 	return (progress_value / base_value) * 100.00 if base_value > 0 else 0.00
+
+
+def _get_sales_person_name(sales_person, cached={}):
+	if sales_person in cached:
+		return cached[sales_person]
+
+	sales_person_name = frappe.db.get_value('Employee', sales_person, 'employee_name')
+	cached[sales_person] = sales_person_name
+
+	return sales_person_name

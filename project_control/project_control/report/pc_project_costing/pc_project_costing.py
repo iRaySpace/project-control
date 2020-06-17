@@ -38,7 +38,7 @@ def _get_columns(filters):
 		make_column('Actual GP %', 'actual_gp_per', 130, 'Percent'),
 		make_column('Cost Variance', 'cost_variance', 130),
 		make_column('Cost Variant Result', 'cost_variant_res', 130, 'Data'),
-		make_column('Gross Profit Previously Recognized', 'gp_previous', 130),
+		make_column('WIP Gross P&L', 'gp_previous', 130),
 		make_column('Sales Person', 'sales_person', 130, 'Link', 'Employee'),
 		make_column('Collected Amount', 'collected_amount', 130)
 	]

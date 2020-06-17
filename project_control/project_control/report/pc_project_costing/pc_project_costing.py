@@ -129,7 +129,8 @@ def _get_data(filters):
 			project_code,
 			wip_gross_pl_account,
 			_get_posting_date_conditions(),
-			filters
+			filters,
+			True
 		)
 
 	others = {
@@ -169,12 +170,18 @@ def _get_posting_date_conditions():
 	return 'posting_date >= %(from_date)s AND posting_date <= %(to_date)s'
 
 
-def _get_net_journal(project, account, conditions='', filters={}):
+def _get_net_journal(project, account, conditions='', filters={}, is_parent_account=False):
 	filters['project'] = project
 	filters['account'] = account
 
 	if conditions:
 		conditions = 'AND {}'.format(conditions)
+
+	if is_parent_account:
+		lft, rgt = frappe.db.get_value("Account", filters["account"], ["lft", "rgt"])
+		conditions += """ AND jea.account in (select name from tabAccount where lft>=%s and rgt<=%s and docstatus<2)""" % (lft, rgt)
+	else:
+		conditions += """ AND jea.account=%(account)s"""
 
 	net_journal = 0.0
 	data = frappe.db.sql("""
@@ -186,7 +193,6 @@ def _get_net_journal(project, account, conditions='', filters={}):
 		ON jea.parent = je.name
 		WHERE je.docstatus=1
 		AND jea.project=%(project)s
-		AND jea.account=%(account)s
 		{conditions}
 	""".format(conditions=conditions), filters, as_dict=1)
 

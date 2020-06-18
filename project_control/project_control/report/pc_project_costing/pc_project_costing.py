@@ -142,7 +142,7 @@ def _get_data(filters):
 		project['actual_gp_per'] = _get_percent(project['actual_gp'], project['wip_billing'])
 
 		project['cost_variance'] = project['estimated_cost'] - project['wip_job_cost']
-		project['cost_variant_res'] = 'Favourable' if project['wip_job_cost'] < project['estimated_cost'] else 'Unfavourable'
+		project['cost_variant_res'] = 'Favorable' if project['wip_job_cost'] < project['estimated_cost'] else 'Unfavorable'
 		project['gp_previous'] = _get_net_journal(
 			project_code,
 			wip_gross_pl_account,

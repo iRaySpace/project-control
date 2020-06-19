@@ -26,6 +26,7 @@ def _get_columns(filters):
 	return [
 		make_column('Old Serial No', 'old_serial_no', 130, 'Data'),
 		make_column('Project Name', 'project_name', 180, 'Link', 'Project'),
+		make_column('Status', 'status', 130, 'Data'),
 		make_column('Order Value', 'order_value', 130),
 		make_column('WIP Billing', 'wip_billing', 130),
 		make_column('Billing Completion %', 'billing_completion_per', 130, 'Percent'),
@@ -51,6 +52,7 @@ def _get_data(filters):
 		SELECT
 			name as project_code,
 			project_name,
+			status,
 			pc_order_value as order_value,
 			old_serial_no,
 			pc_estimated_total as estimated_cost,

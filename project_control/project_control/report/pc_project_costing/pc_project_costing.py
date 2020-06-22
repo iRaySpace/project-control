@@ -43,7 +43,8 @@ def _get_columns(filters):
 		make_column('Sales Person', 'sales_person', 130, 'Data'),
 		make_column('Collected Amount', 'collected_amount', 130),
 		make_column('Cost of Goods Sold', 'cogs', 130),
-		make_column('Sales', 'sales', 130)
+		make_column('Sales', 'sales', 130),
+		make_column('Net Income', 'net_income', 130)
 	]
 
 
@@ -168,6 +169,8 @@ def _get_data(filters):
 				0.00
 			),
 		])
+
+		project['net_income'] = project['sales'] - project['cogs']
 
 	# TODO(refactor): moved others to other functions
 	others_cog_entries = _get_cogs_entries(

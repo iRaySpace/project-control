@@ -26,6 +26,7 @@ def _get_columns(filters):
 	return [
 		make_column('Old Serial No', 'old_serial_no', 130, 'Data'),
 		make_column('Project Name', 'project_name', 180, 'Link', 'Project'),
+		make_column('Status', 'status', 130, 'Data'),
 		make_column('Order Value', 'order_value', 130),
 		make_column('WIP Billing', 'wip_billing', 130),
 		make_column('Billing Completion %', 'billing_completion_per', 130, 'Percent'),
@@ -42,7 +43,8 @@ def _get_columns(filters):
 		make_column('Sales Person', 'sales_person', 130, 'Data'),
 		make_column('Collected Amount', 'collected_amount', 130),
 		make_column('Cost of Goods Sold', 'cogs', 130),
-		make_column('Sales', 'sales', 130)
+		make_column('Sales', 'sales', 130),
+		make_column('Net Income', 'net_income', 130)
 	]
 
 
@@ -51,6 +53,7 @@ def _get_data(filters):
 		SELECT
 			name as project_code,
 			project_name,
+			status,
 			pc_order_value as order_value,
 			old_serial_no,
 			pc_estimated_total as estimated_cost,
@@ -167,6 +170,8 @@ def _get_data(filters):
 			),
 		])
 
+		project['net_income'] = project['sales'] - project['cogs']
+
 	# TODO(refactor): moved others to other functions
 	others_cog_entries = _get_cogs_entries(
 		'',
@@ -202,8 +207,10 @@ def _get_data(filters):
 		),
 	}
 
-	if others.get('wip_job_cost') > 0:
-		projects.append(others)
+	# net income
+	others['net_income'] = others['sales'] - others['cogs']
+
+	projects.append(others)
 
 	return projects
 

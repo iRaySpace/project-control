@@ -207,8 +207,10 @@ def _get_data(filters):
 		),
 	}
 
-	if others.get('wip_job_cost') > 0:
-		projects.append(others)
+	# net income
+	others['net_income'] = others['sales'] - others['cogs']
+
+	projects.append(others)
 
 	return projects
 

@@ -4,6 +4,7 @@ from frappe import _
 
 
 def validate(project, method):
+    _validate_installation_note(project)
     _set_budget_total(project)
     _set_variation_total(project)
     _set_estimated_total(project)
@@ -28,6 +29,14 @@ def after_insert(project, method):
             'project': project.name
         }).insert()
     frappe.msgprint(_('Tasks are also generated.'))
+
+
+def _validate_installation_note(project):
+    in_validation = frappe.db.get_single_value('Project Control Settings', 'in_validation')
+    if in_validation and project.status == 'Completed':
+        installation_notes = frappe.get_all('Installation Note', {'project': project.name})
+        if not installation_notes:
+            frappe.throw(_('Please make an Installation Note first before closing the project'.format(project.name)))
 
 
 def _set_budget_total(project):

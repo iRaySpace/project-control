@@ -42,6 +42,7 @@ def _get_columns(filters):
 		make_column('WIP Gross P&L', 'gp_previous', 130),
 		make_column('Sales Person', 'sales_person', 130, 'Data'),
 		make_column('Collected Amount', 'collected_amount', 130),
+		make_column('Collection %', 'collection_per', 130, 'Percent'),
 		make_column('Cost of Goods Sold', 'cogs', 130),
 		make_column('Sales', 'sales', 130),
 		make_column('Net Income', 'net_income', 130)
@@ -128,10 +129,12 @@ def _get_data(filters):
 		)
 
 		collected_amounts = _get_collected_amounts(project_code, _get_posting_date_conditions(), filters)
-		project['collected_amount'] = reduce(lambda total, x: total + x['collected_amount'], collected_amounts, 0.00)
 
 		project['wip_billing'] = abs(wip_billing)
 		project['wip_job_cost'] = wip_job_cost
+
+		project['collected_amount'] = reduce(lambda total, x: total + x['collected_amount'], collected_amounts, 0.00)
+		project['collection_per'] = _get_percent(project['collected_amount'], project['wip_billing'])
 
 		sales_person_name = _get_sales_person_name(project.get('sales_person'), cached_sales_person)
 		project['sales_person'] = sales_person_name

@@ -51,3 +51,4 @@ def _set_variation_total(project):
 
 def _set_estimated_total(project):
     project.pc_estimated_total = sum([project.pc_budget_total, project.pc_variation_total])
+    project.pc_estimated_gross_margin_per = (project.pc_estimated_total / project.pc_estimated_gross_margin) * 100.00

@@ -37,7 +37,8 @@ fixtures = [
                     "Employee-pc_gratuity_till_date",
                     "Project-pc_order_value",
                     "Project-pc_sales_person",
-                    "Installation Note-project"
+                    "Installation Note-project",
+                    "Project-pc_sales_person_name"
                 ]
             ]
         ]

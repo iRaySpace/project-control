@@ -38,7 +38,8 @@ fixtures = [
                     "Project-pc_order_value",
                     "Project-pc_sales_person",
                     "Installation Note-project",
-                    "Project-pc_sales_person_name"
+                    "Project-pc_sales_person_name",
+                    "Project-pc_estimated_gross_margin_per"
                 ]
             ]
         ]

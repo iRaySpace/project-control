@@ -45,20 +45,23 @@ def _get_gl_entries(filters):
 
 	gl_entries = frappe.db.sql(
 		"""
-		SELECT
-			posting_date, account, party_type, party,
-			voucher_type, voucher_no, cost_center, project,
-			against_voucher_type, against_voucher, account_currency,
-			remarks, against, is_opening {select_fields}
-		FROM `tabGL Entry`
-		WHERE company=%(company)s
-		AND voucher_type != 'Journal Entry' {conditions}
-		{order_by_statement}
+			SELECT
+				posting_date, account, party_type, party,
+				voucher_type, voucher_no, cost_center, project,
+				against_voucher_type, against_voucher, account_currency,
+				remarks, against, is_opening {select_fields}
+			FROM `tabGL Entry`
+			WHERE company=%(company)s
+			AND voucher_type != 'Journal Entry' {conditions}
+			{order_by_statement}
 		""".format(
 			select_fields=select_fields,
 			conditions=general_ledger.get_conditions(filters),
 			order_by_statement=order_by_statement
-		), filters, as_dict=1)
+		),
+		filters,
+		as_dict=1
+	)
 
 	je_order_by_statement = "order by je.posting_date, jea.account, jea.creation"
 
@@ -69,30 +72,33 @@ def _get_gl_entries(filters):
 
 	journal_entries = frappe.db.sql(
 		"""
-        SELECT
-            jea.name as gl_entry,
-            je.posting_date,
-            jea.account,
-            'Journal Entry' as voucher_type,
-            je.name as voucher_no,
-            jea.party_type,
-            jea.party,
-            jea.reference_type as against_voucher_type,
-            jea.reference_name as against_voucher,
-            jea.cost_center, 
-            jea.project,
-            jea.account_currency,
-            jea.user_remark as remarks,
-            jea.against_account as against {select_fields}
-        FROM `tabJournal Entry Account` jea
-        INNER JOIN `tabJournal Entry` je ON jea.parent = je.name
-        WHERE je.company=%(company)s AND je.docstatus=1 {conditions}
-        {order_by_statement}
-        """.format(
+			SELECT
+				jea.name as gl_entry,
+				je.posting_date,
+				jea.account,
+				'Journal Entry' as voucher_type,
+				je.name as voucher_no,
+				jea.party_type,
+				jea.party,
+				jea.reference_type as against_voucher_type,
+				jea.reference_name as against_voucher,
+				jea.cost_center, 
+				jea.project,
+				jea.account_currency,
+				jea.user_remark as remarks,
+				jea.against_account as against {select_fields}
+			FROM `tabJournal Entry Account` jea
+			INNER JOIN `tabJournal Entry` je ON jea.parent = je.name
+			WHERE je.company=%(company)s AND je.docstatus=1 {conditions}
+			{order_by_statement}
+		""".format(
 			select_fields=select_fields,
 			conditions=je_conditions,
 			order_by_statement=je_order_by_statement
-		), filters, as_dict=1)
+		),
+		filters,
+		as_dict=1
+	)
 
 	entries = [*gl_entries, *journal_entries]
 

@@ -128,30 +128,24 @@ def _get_party_names(data):
 			)
 		)
 
-	party_names = {}
-
 	supplier_list = make_list('Supplier')
 	suppliers = _make_dict(
-		frappe.db.sql("""
-			SELECT name, supplier_name
-			FROM `tabSupplier`
-			WHERE name IN (%(suppliers)s)
-		""", {
-			'suppliers': ', '.join(supplier_list)
-		}, as_dict=1),
+		frappe.get_list(
+			'Supplier',
+			filters=[['name', 'in', supplier_list]],
+			fields=['name', 'supplier_name']
+		),
 		'name',
 		'supplier_name'
 	)
 
 	customer_list = list(filter(lambda x: x, make_list('Customer')))
 	customers = _make_dict(
-		frappe.db.sql("""
-			SELECT name, customer_name
-			FROM `tabCustomer`
-			WHERE name in (%(customers)s)
-		""", {
-			'customers': ', '.join(customer_list)
-		}, as_dict=1),
+		frappe.get_all(
+			'Customer',
+			filters=[['name', 'in', customer_list]],
+			fields=['name', 'customer_name']
+		),
 		'name',
 		'customer_name'
 	)

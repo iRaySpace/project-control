@@ -2,12 +2,12 @@ import frappe
 from frappe import _
 
 
-def validate_project_costing(project, cost):
+def validate_project_costing(project, cost, stock_item_issue=False):
     estimated_total = frappe.get_value('Project', project, 'pc_estimated_total')
     total_purchase_cost = frappe.get_value('Project', project, 'total_purchase_cost')
 
     total_costing = sum([total_purchase_cost, cost])
-    if not _get_ignore_se():
+    if not _get_ignore_se() or stock_item_issue:
         total_consumed_material_cost = frappe.get_value('Project', project, 'total_consumed_material_cost')
         total_costing = total_costing + total_consumed_material_cost
 

@@ -462,15 +462,15 @@ def _get_cogs_entries(project, account, conditions='', filters={}):
 		conditions = 'AND {}'.format(conditions)
 
 	if project:
-		conditions = conditions + 'AND ge.project=%(project)s'
+		conditions = conditions + ' AND project=%(project)s'
 	else:
-		conditions = conditions + 'AND ge.project IS NULL OR ge.project = ""'
+		conditions = conditions + ' AND COALESCE(project, "") = ""'
 
 	data = frappe.db.sql("""
-		SELECT ge.credit, ge.debit
-		FROM `tabGL Entry` ge
-		WHERE ge.voucher_type IN ('Delivery Note', 'Purchase Invoice', 'Journal Entry') 
-		AND ge.account=%(account)s
+		SELECT credit, debit
+		FROM `tabGL Entry`
+		WHERE voucher_type IN ('Delivery Note', 'Purchase Invoice', 'Journal Entry', 'Stock Entry') 
+		AND account=%(account)s
 		{conditions}
 	""".format(conditions=conditions), filters, as_dict=1)
 
@@ -485,9 +485,9 @@ def _get_sales_entries(project, account, conditions='', filters={}):
 		conditions = 'AND {}'.format(conditions)
 
 	if project:
-		conditions = conditions + 'AND ge.project=%(project)s'
+		conditions = conditions + ' AND ge.project=%(project)s'
 	else:
-		conditions = conditions + 'AND ge.project IS NULL OR ge.project = ""'
+		conditions = conditions + ' AND COALESCE(project, "") = ""'
 
 	data = frappe.db.sql("""
 		SELECT ge.credit, ge.debit

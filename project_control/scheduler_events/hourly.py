@@ -56,7 +56,7 @@ def set_gross_gratuity():
 
 
 def _get_salaries():
-    gratuity_base_on = frappe.db.get_single_value('Ashbee Settings', 'gratuity_base_on')
+    gratuity_base_on = frappe.db.get_single_value('Project Control Settings', 'gratuity_base_on')
 
     salary_columns = ['base']
     if gratuity_base_on == 'Gross':

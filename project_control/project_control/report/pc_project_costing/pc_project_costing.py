@@ -33,6 +33,8 @@ def _get_columns(filters):
 		make_column('Estimated Cost', 'estimated_cost', 130),
 		make_column('WIP Job Cost', 'wip_job_cost', 130),
 		make_column('Cost Completion %', 'cost_completion_per', 130, 'Percent'),
+		make_column('Total Recognized Profit', 'total_recognized_profit', 130),
+		make_column('Currently Recognized Profit', 'curr_recognized_profit', 130),
 		make_column('Estimated GP', 'estimated_gp', 130),
 		make_column('Actual GP', 'actual_gp', 130),
 		make_column('Estimated GP %', 'estimated_gp_per', 130, 'Percent'),
@@ -174,6 +176,8 @@ def _get_data(filters):
 		])
 
 		project['net_income'] = project['sales'] - project['cogs']
+		project['total_recognized_profit'] = project['estimated_gp'] * (project['cost_completion_per'] / 100.00)
+		project['curr_recognized_profit'] = project['total_recognized_profit'] - project['net_income']
 
 	# TODO(refactor): moved others to other functions
 	others_cog_entries = _get_cogs_entries(

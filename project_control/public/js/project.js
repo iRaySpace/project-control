@@ -6,7 +6,7 @@ frappe.ui.form.on('Project', {
 });
 
 
-async function _set_read_only_budget(frm) {
+function _set_read_only_budget(frm) {
   if (frm.doc.__islocal) return;
   if (!frappe.user.has_role('Projects Manager')) {
     frm.set_df_property('pc_budgets', 'read_only', 1);

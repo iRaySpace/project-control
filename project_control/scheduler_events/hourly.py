@@ -1,30 +1,46 @@
 import math
 import frappe
 from frappe.utils.data import getdate, nowdate
+from project_control.data import calculate_estimated_gross_margin
 
 DAYS_PER_YEAR = 365.0
 
 
+# project_control.scheduler_events.hourly.set_estimated_gross_margin
 def set_estimated_gross_margin():
-    projects = frappe.get_all('Project')
+    projects = frappe.get_all(
+        "Project",
+        fields=[
+            "name",
+            "pc_order_value",
+            "total_sales_amount",
+            "total_billed_amount",
+            "estimated_costing",
+        ],
+    )
     for project in projects:
-        project_name = project.get('name')
-        data = frappe.db.sql("""
-            SELECT 
-                pc_estimated_total,
-                total_sales_amount
-            FROM `tabProject`
-            WHERE name=%s
-        """, project_name, as_dict=True)
-        if data:
-            project = data[0]
-            estimated_gross_margin = project['total_sales_amount'] - project['pc_estimated_total']
-            frappe.db.set_value('Project', project_name, 'pc_estimated_gross_margin', estimated_gross_margin)
+        (
+            estimated_gross_margin,
+            estimated_gross_margin_per,
+        ) = calculate_estimated_gross_margin(project)
+        frappe.db.set_value(
+            "Project",
+            project.get("name"),
+            "pc_estimated_gross_margin",
+            estimated_gross_margin,
+        )
+        frappe.db.set_value(
+            "Project",
+            project.get("name"),
+            "pc_estimated_gross_margin_per",
+            estimated_gross_margin_per,
+        )
 
 
 # project_control.scheduler_events.hourly.set_gross_gratuity
 def set_gross_gratuity():
-    employees = frappe.db.sql("""
+    employees = frappe.db.sql(
+        """
         SELECT 
             name, 
             employee_name,
@@ -33,46 +49,59 @@ def set_gross_gratuity():
             pc_gratuity_paid_till_date
         FROM `tabEmployee`
         WHERE status = 'Active'
-    """, as_dict=1)
+    """,
+        as_dict=1,
+    )
 
-    filtered_employees = list(filter(lambda x: x['nationality'] != 'Bahraini', employees))
+    filtered_employees = list(
+        filter(lambda x: x["nationality"] != "Bahraini", employees)
+    )
     salaries = _get_salaries()
 
     now = nowdate()
 
     for employee in filtered_employees:
-        name = employee.get('name')
-        date_of_joining = employee.get('date_of_joining')
+        name = employee.get("name")
+        date_of_joining = employee.get("date_of_joining")
         working_years, last_working_year_days = _year_diff(now, date_of_joining)
 
         salary = salaries.get(name, 0.00)
-        total_gratuity = sum([
-            _get_gross_gratuity(working_years, salary),
-            _get_per_day_gratuity(working_years, last_working_year_days, salary),
-            -employee.get('pc_gratuity_paid_till_date', 0)
-        ])
+        total_gratuity = sum(
+            [
+                _get_gross_gratuity(working_years, salary),
+                _get_per_day_gratuity(working_years, last_working_year_days, salary),
+                -employee.get("pc_gratuity_paid_till_date", 0),
+            ]
+        )
 
-        frappe.db.set_value('Employee', name, 'pc_gratuity_till_date', total_gratuity)
+        frappe.db.set_value("Employee", name, "pc_gratuity_till_date", total_gratuity)
 
 
 def _get_salaries():
-    gratuity_base_on = frappe.db.get_single_value('Project Control Settings', 'gratuity_base_on')
+    gratuity_base_on = frappe.db.get_single_value(
+        "Project Control Settings", "gratuity_base_on"
+    )
 
-    salary_columns = ['base']
-    if gratuity_base_on == 'Gross':
-        salary_columns.append('variable')
+    salary_columns = ["base"]
+    if gratuity_base_on == "Gross":
+        salary_columns.append("variable")
 
     salary_select = " + ".join(salary_columns)
 
-    salaries = frappe.db.sql("""
+    salaries = frappe.db.sql(
+        """
         SELECT
             {} AS salary,
             employee
         FROM `tabSalary Structure Assignment`
         WHERE docstatus = 1
-    """.format(salary_select), as_dict=1)
+    """.format(
+            salary_select
+        ),
+        as_dict=1,
+    )
 
-    return {salary['employee']: salary['salary'] for salary in salaries}
+    return {salary["employee"]: salary["salary"] for salary in salaries}
 
 
 def _year_diff(string_ed_date, string_st_date):
@@ -138,7 +167,9 @@ def _calculate_gratuity(no_of_years, days_per_year, gratuity_days, gross_salary)
     gratuity_per_working_day = days_per_month_gratuity / 30
     #  gratuity_per_working_day = 0.07440475
 
-    gratuity_for_total_working_days = gratuity_per_working_day * total_no_of_days_gratuity
+    gratuity_for_total_working_days = (
+        gratuity_per_working_day * total_no_of_days_gratuity
+    )
     # gratuity_for_total_working_days = 367.261846
 
     basic_salary = gross_salary * 12

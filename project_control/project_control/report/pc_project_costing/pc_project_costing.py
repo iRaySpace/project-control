@@ -47,7 +47,7 @@ def _get_columns(filters):
 		make_column('Collection %', 'collection_per', 130, 'Percent'),
 		make_column('Cost of Goods Sold', 'cogs', 130),
 		make_column('Sales', 'sales', 130),
-		make_column('Net Income', 'net_income', 130)
+		make_column('Gross Profit This Year', 'gross_profit', 130)
 	]
 
 
@@ -175,9 +175,9 @@ def _get_data(filters):
 			),
 		])
 
-		project['net_income'] = project['sales'] - project['cogs']
+		project['gross_profit'] = project['sales'] - project['cogs']
 		project['total_recognized_profit'] = project['estimated_gp'] * (project['cost_completion_per'] / 100.00)
-		project['curr_recognized_profit'] = project['total_recognized_profit'] - project['net_income']
+		project['curr_recognized_profit'] = project['total_recognized_profit'] - project['gross_profit']
 
 	# TODO(refactor): moved others to other functions
 	others_cog_entries = _get_cogs_entries(
@@ -215,7 +215,7 @@ def _get_data(filters):
 	}
 
 	# net income
-	others['net_income'] = others['sales'] - others['cogs']
+	others['gross_profit'] = others['sales'] - others['cogs']
 
 	projects.append(others)
 

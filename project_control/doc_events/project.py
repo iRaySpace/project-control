@@ -1,6 +1,7 @@
 from functools import reduce
 import frappe
 from frappe import _
+from project_control.data import calculate_estimated_gross_margin
 
 
 def validate(project, method):
@@ -51,7 +52,8 @@ def _set_variation_total(project):
 
 def _set_estimated_total(project):
     project.pc_estimated_total = sum([project.pc_budget_total, project.pc_variation_total])
-
-    estimated_gross_margin_per = (project.pc_estimated_total / project.pc_estimated_gross_margin) * 100.00 \
-        if project.pc_estimated_gross_margin else None
+    if not project.estimated_costing:
+        project.estimated_costing = project.pc_estimated_total
+    estimated_gross_margin, estimated_gross_margin_per = calculate_estimated_gross_margin(project)
+    project.pc_estimated_gross_margin = estimated_gross_margin
     project.pc_estimated_gross_margin_per = estimated_gross_margin_per

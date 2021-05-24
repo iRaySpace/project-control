@@ -29,7 +29,7 @@ def validate_project_costing_for_warning(project, cost):
 
 
 def calculate_estimated_gross_margin(data):
-    basis_values = sum([data.get(x) for x in _get_estimated_base_on()])
+    basis_values = sum([data.get(x) or 0 for x in _get_estimated_base_on()])
     estimated_costing = data.get('estimated_costing')
     estimated_profit = basis_values - estimated_costing
     estimated_profit_per = (estimated_profit / basis_values) * 100 if basis_values else 0.00
